@@ -4036,11 +4036,22 @@
   initFirebaseSync();
 
   // Zodra je een tekstveld verlaat: als er een update lag te wachten (omdat je aan het
-  // typen was toen die binnenkwam), laat die nu alsnog zien.
-  document.addEventListener('focusout', function(){
+  // typen was toen die binnenkwam), laat die nu alsnog zien. We lezen daarbij de waarde
+  // rechtstreeks uit het tekstveld zelf (niet uit een JS-object) — zo gaat niets verloren
+  // van wat je ná de laatste binnengekomen update nog getypt hebt.
+  document.addEventListener('focusout', function(e){
+    var blurredEl = e.target;
     setTimeout(function(){
       if(fbPendingRerender && !isEditingFocused()){
         fbPendingRerender = false;
+        if(blurredEl && blurredEl.tagName === 'TEXTAREA'){
+          if(state.editingSection){
+            var liveSec = findSectionById(state.editingSection);
+            if(liveSec) liveSec.content = blurredEl.value;
+          } else if(state.editingRules){
+            state.planner.rules = blurredEl.value;
+          }
+        }
         renderAll();
       }
     }, 0);
