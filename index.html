@@ -1404,13 +1404,22 @@
   var fbEverConnected = false;
 
   var fbRetryAttempt = 0;
+  var fbLastPushedPayload = null; // laatst zelf verstuurde payload, om echo's van onszelf te herkennen
   function attachSnapshotListener(){
     fbDocRef.onSnapshot(function(doc){
       fbRetryAttempt = 0; // succesvolle verbinding: reset de backoff
       if(doc.exists){
         var data = doc.data();
         if(data && data.payload){
-          applyRemotePayload(data.payload);
+          // Negeer updates die simpelweg de echo zijn van onze eigen zojuist verstuurde
+          // schrijfactie (lokale pending write, of de server-bevestiging ervan). Zonder
+          // deze check triggert elke toetsaanslag die save() aanroept een volledige
+          // renderAll(), wat net-geopende tekstvakken meteen weer sluit.
+          var isOwnPendingWrite = doc.metadata && doc.metadata.hasPendingWrites;
+          var isEchoOfOwnWrite = fbLastPushedPayload !== null && data.payload === fbLastPushedPayload;
+          if(!isOwnPendingWrite && !isEchoOfOwnWrite){
+            applyRemotePayload(data.payload);
+          }
         }
       } else if(!fbEverConnected){
         // Nog geen gedeeld document: dit apparaat is de eerste, dus die zet de huidige lokale
@@ -1472,6 +1481,7 @@
     clearTimeout(fbSaveTimer);
     var doPush = function(){
       var payload = JSON.stringify({ subjects: state.subjects, planner: state.planner, grades: state.grades });
+      fbLastPushedPayload = payload;
       fbDocRef.set({ payload: payload, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(function(err){
         console.error('Kon niet naar de gedeelde versie schrijven', err);
         if(err && (err.code === 'invalid-argument' || /longer than|exceeds|too large/i.test(err.message || ''))){
