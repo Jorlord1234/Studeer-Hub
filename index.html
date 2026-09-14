@@ -1491,15 +1491,13 @@
     var parsed;
     try{ parsed = JSON.parse(raw); }catch(e){ console.error('Kon gedeelde data niet lezen', e); return; }
 
-    // Bewaar wat je op dit moment aan het typen bent, zodat een binnenkomende update van een
-    // ander tabblad of je huiswerkhulp dat niet overschrijft.
-    var preserveSectionId = state.editingSection;
-    var preserveContent = null;
-    if(preserveSectionId){
-      var liveSec = findSectionById(preserveSectionId);
-      if(liveSec) preserveContent = liveSec.content;
+    // Bewaar wat je op dit moment aan het typen bent (in welk tekstveld dan ook), zodat een
+    // binnenkomende update van een ander tabblad of je huiswerkhulp dat niet overschrijft.
+    var activeEl = document.activeElement;
+    var preserveValue = null;
+    if(activeEl && typeof activeEl._syncApply === 'function'){
+      preserveValue = activeEl.value;
     }
-    var preserveRules = state.editingRules ? state.planner.rules : null;
 
     fbApplyingRemote = true;
     try{
@@ -1511,12 +1509,8 @@
       // gedeelde versie aangevuld te worden, anders verdwijnt het weer bij elke sync.
       healState();
 
-      if(preserveSectionId && preserveContent !== null){
-        var newSec = findSectionById(preserveSectionId);
-        if(newSec) newSec.content = preserveContent;
-      }
-      if(preserveRules !== null){
-        state.planner.rules = preserveRules;
+      if(preserveValue !== null){
+        activeEl._syncApply(preserveValue);
       }
 
       // Niet herrenderen terwijl je middenin een tekstveld typt — dat zou de cursor/focus
@@ -2697,6 +2691,7 @@
       textarea.value = sec.content;
       textarea.placeholder = opts.placeholder || '- Typ hier je bullets, één per regel\n  - inspringen met 2 spaties voor een sub-bullet\n\nGewone tekst zonder streepje wordt een alinea.\nGebruik **dit** voor vetgedrukt.';
       textarea.addEventListener('input', function(){ sec.content = textarea.value; });
+      textarea._syncApply = function(v){ var s = findSectionById(sec.id); if(s) s.content = v; };
       body.appendChild(attachMediaButtons(textarea));
       body.appendChild(textarea);
       var hint = document.createElement('div');
@@ -3150,6 +3145,7 @@
       textarea.value = state.planner.rules;
       textarea.placeholder = '- Typ hier je eigen afspraken met jezelf, één per regel\n\nGebruik **dit** voor vetgedrukt.';
       textarea.addEventListener('input', function(){ state.planner.rules = textarea.value; });
+      textarea._syncApply = function(v){ state.planner.rules = v; };
       body.appendChild(attachMediaButtons(textarea));
       body.appendChild(textarea);
     } else {
@@ -3191,6 +3187,9 @@
     return wrap;
   }
 
+  function findWeekById(id){
+    return (state.planner.weeks || []).find(function(w){ return w.id === id; });
+  }
   function getCellData(week, subjId, dayKey){
     var raw = week.cells[subjId] && week.cells[subjId][dayKey];
     if(!raw) return { text:'', done:false, important:false };
@@ -3313,10 +3312,6 @@
       addNoteBtn.addEventListener('click', function(){ editWeekNotePrompt(week); });
       headRight.appendChild(addNoteBtn);
     }
-    var delBtn = iconBtn('trash', null, 'icon-btn danger');
-    delBtn.title = 'Wis het huiswerk van deze week';
-    delBtn.addEventListener('click', function(){ clearCurrentWeek(week); });
-    headRight.appendChild(delBtn);
     head.appendChild(headRight);
     card.appendChild(head);
 
@@ -3390,6 +3385,13 @@
           setCellData(week, subj.id, d.key, cellData);
         });
         ta.addEventListener('blur', function(){ save(); });
+        ta._syncApply = function(v){
+          var w = findWeekById(week.id);
+          if(!w) return;
+          var cd = getCellData(w, subj.id, d.key);
+          cd.text = v;
+          setCellData(w, subj.id, d.key, cd);
+        };
         cellWrap.appendChild(ta);
 
         var toolbar = document.createElement('div');
@@ -4044,13 +4046,8 @@
     setTimeout(function(){
       if(fbPendingRerender && !isEditingFocused()){
         fbPendingRerender = false;
-        if(blurredEl && blurredEl.tagName === 'TEXTAREA'){
-          if(state.editingSection){
-            var liveSec = findSectionById(state.editingSection);
-            if(liveSec) liveSec.content = blurredEl.value;
-          } else if(state.editingRules){
-            state.planner.rules = blurredEl.value;
-          }
+        if(blurredEl && typeof blurredEl._syncApply === 'function'){
+          blurredEl._syncApply(blurredEl.value);
         }
         renderAll();
       }
