@@ -1272,6 +1272,32 @@
   var fbSaveTimer = null;
   var fbEverConnected = false;
 
+  var fbRetryAttempt = 0;
+  function attachSnapshotListener(){
+    fbDocRef.onSnapshot(function(doc){
+      fbRetryAttempt = 0; // succesvolle verbinding: reset de backoff
+      if(doc.exists){
+        var data = doc.data();
+        if(data && data.payload){
+          applyRemotePayload(data.payload);
+        }
+      } else if(!fbEverConnected){
+        // Nog geen gedeeld document: dit apparaat is de eerste, dus die zet de huidige lokale
+        // staat neer als startpunt voor de gedeelde versie.
+        pushToFirebase(true);
+      }
+      fbEverConnected = true;
+    }, function(err){
+      console.error('Firebase sync-fout', err);
+      toast('Kon niet verbinden met de gedeelde versie — probeer opnieuw te verbinden...');
+      // Automatisch opnieuw proberen (bijv. als de regels nog niet live waren toen we startten),
+      // met oplopende wachttijd zodat het niet blijft rammen als de verbinding echt weg is.
+      fbRetryAttempt++;
+      var delay = Math.min(30000, 3000 * fbRetryAttempt);
+      setTimeout(attachSnapshotListener, delay);
+    });
+  }
+
   function initFirebaseSync(){
     if(typeof firebase === 'undefined'){
       console.error('Firebase SDK kon niet laden (geen internetverbinding?)');
@@ -1286,22 +1312,7 @@
       console.error('Firebase kon niet starten', e);
       return;
     }
-    fbDocRef.onSnapshot(function(doc){
-      if(doc.exists){
-        var data = doc.data();
-        if(data && data.payload){
-          applyRemotePayload(data.payload);
-        }
-      } else if(!fbEverConnected){
-        // Nog geen gedeeld document: dit apparaat is de eerste, dus die zet de huidige lokale
-        // staat neer als startpunt voor de gedeelde versie.
-        pushToFirebase(true);
-      }
-      fbEverConnected = true;
-    }, function(err){
-      console.error('Firebase sync-fout', err);
-      toast('Kon niet verbinden met de gedeelde versie — je werkt nu lokaal door');
-    });
+    attachSnapshotListener();
   }
 
   function applyRemotePayload(raw){
