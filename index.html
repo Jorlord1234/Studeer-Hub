@@ -3884,7 +3884,19 @@
           (s.notes||[]).forEach(function(n){ n.id = uid('note'); (n.sections||[]).forEach(function(sec){ sec.id = uid('sec'); }); });
           (s.portfolioItems||[]).forEach(function(p){ p.id = uid('pf'); (p.sections||[]).forEach(function(sec){ sec.id = uid('sec'); }); });
         });
-        state.subjects = state.subjects.concat(parsed.subjects);
+        // Vakken met dezelfde naam samenvoegen met een bestaand vak, in plaats van als
+        // los dubbel vak toe te voegen.
+        parsed.subjects.forEach(function(s){
+          var existing = state.subjects.find(function(x){ return x.name.toLowerCase() === s.name.toLowerCase(); });
+          if(existing){
+            existing.chapters = (existing.chapters || []).concat(s.chapters || []);
+            existing.books = (existing.books || []).concat(s.books || []);
+            existing.notes = (existing.notes || []).concat(s.notes || []);
+            existing.portfolioItems = (existing.portfolioItems || []).concat(s.portfolioItems || []);
+          } else {
+            state.subjects.push(s);
+          }
+        });
 
         if(parsed.planner){
           var oldIdToLabel = {};
