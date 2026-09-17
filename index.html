@@ -1775,27 +1775,34 @@
 
   var fbRetryAttempt = 0;
   // Zolang er een lokale wijziging staat te wachten om verstuurd te worden (fbPushPending),
-  // negeren we binnenkomende snapshots. Anders kan een update die net iets eerder onderweg
-  // was (bijv. de allereerste sync na het openen van de pagina) je verse, nog-niet-verstuurde
-  // wijziging stilletjes overschrijven — dat is precies de bug waarbij een net toegevoegd
-  // item weer "verdwijnt". Zodra onze eigen push klaar is, komt er vanzelf een nieuwe,
-  // actuele snapshot binnen (Firestore triggert de listener ook voor je eigen schrijfacties).
+  // negeren we binnenkomende snapshots — en sturen we in plaats daarvan onze eigen, nieuwere
+  // versie. Dit dekt twee gevallen die anders een net toegevoegd item konden laten
+  // "verdwijnen": (1) een update die al onderweg was toen jouw wijziging binnenkwam, en
+  // (2) een wijziging die je maakte vlak vóórdat de verbinding met de gedeelde versie
+  // helemaal tot stand was gekomen (fbReady was nog false). Zodra onze eigen push is
+  // gelukt, komt er vanzelf weer een normale, actuele snapshot binnen.
   var fbPushPending = false;
   function attachSnapshotListener(){
     fbDocRef.onSnapshot(function(doc){
       fbRetryAttempt = 0; // succesvolle verbinding: reset de backoff
-      if(fbPushPending) return; // eigen wijziging staat nog klaar om te versturen: deze snapshot negeren
+      fbEverConnected = true;
+      if(fbPushPending){
+        // Er staat nog een lokale wijziging klaar (mogelijk gemaakt vóórdat we hier
+        // verbonden waren) — deze binnenkomende snapshot negeren en onze versie alsnog
+        // meteen versturen, in plaats van de lokale wijziging stilletjes te verliezen.
+        pushToFirebase(true);
+        return;
+      }
       if(doc.exists){
         var data = doc.data();
         if(data && data.payload){
           applyRemotePayload(data.payload);
         }
-      } else if(!fbEverConnected){
+      } else {
         // Nog geen gedeeld document: dit apparaat is de eerste, dus die zet de huidige lokale
         // staat neer als startpunt voor de gedeelde versie.
         pushToFirebase(true);
       }
-      fbEverConnected = true;
     }, function(err){
       console.error('Firebase sync-fout', err);
       toast('Kon niet verbinden met de gedeelde versie — probeer opnieuw te verbinden...');
@@ -1825,6 +1832,16 @@
   }
 
   var fbPendingRerender = false;
+  // Onthoudt de laatste payload die wijzelf hebben weggeschreven (of net hebben toegepast).
+  // Firestore stuurt voor onze eigen schrijfacties ook een bevestiging terug via onSnapshot —
+  // zonder deze check werd zo'n bevestiging alsnog volledig verwerkt, waarbij alle vak-,
+  // hoofdstuk- en itemobjecten in het geheugen door NIEUWE objecten vervangen worden. Knoppen
+  // in de zijbalk die op dat moment nog een verwijzing naar het oude object vasthielden (zoals
+  // "+ Nieuw..." vlak voordat je op Enter drukt) voegden hun item dan toe aan een object dat
+  // niet meer in de actuele state zat — het item verdween zonder foutmelding. Door identieke
+  // echo's meteen te herkennen en te negeren, blijven bestaande objectreferenties intact
+  // zolang er niets écht veranderd is.
+  var fbLastAppliedPayload = null;
   function isEditingFocused(){
     var el = document.activeElement;
     return !!(el && (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT'));
@@ -1860,6 +1877,7 @@
   }
 
   function applyRemotePayload(raw){
+    if(raw === fbLastAppliedPayload) return; // echo van onze eigen laatste schrijfactie: niets veranderd, dus niets doen
     var parsed;
     try{ parsed = JSON.parse(raw); }catch(e){ console.error('Kon gedeelde data niet lezen', e); return; }
 
@@ -1873,6 +1891,7 @@
 
     fbApplyingRemote = true;
     try{
+      fbLastAppliedPayload = raw;
       state.subjects = (parsed.subjects || []).map(normalizeSubject);
       state.planner = parsed.planner || state.planner;
       state.planner.weeks = (state.planner.weeks || []).map(normalizeWeek);
@@ -1902,11 +1921,16 @@
   }
 
   function pushToFirebase(immediate){
-    if(!fbReady || fbApplyingRemote) return;
-    clearTimeout(fbSaveTimer);
+    if(fbApplyingRemote) return;
+    // Er staat een lokale wijziging klaar — dit zetten we altijd, ook als we nog niet
+    // verbonden zijn. Zodra de verbinding (later) tot stand komt, pikt attachSnapshotListener
+    // dit signaal op en verstuurt hij alsnog, in plaats van de wijziging kwijt te raken.
     fbPushPending = true;
+    if(!fbReady) return;
+    clearTimeout(fbSaveTimer);
     var doPush = function(){
       var payload = JSON.stringify({ subjects: state.subjects, planner: state.planner, grades: state.grades });
+      fbLastAppliedPayload = payload;
       fbDocRef.set({ payload: payload, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(function(){
         fbPushPending = false;
       }).catch(function(err){
