@@ -1650,7 +1650,13 @@
     state.planner.weeks = (state.planner.weeks || []).map(normalizeWeek);
 
     healState();
-    save();
+    // Alleen lokaal opslaan hier — nog GEEN push naar de gedeelde versie. Dit is het allereerste
+    // moment na het openen van de pagina, nog vóórdat we ooit met de gedeelde versie hebben
+    // gepraat. Zou dit wél als "te versturen wijziging" gemarkeerd worden, dan zou een compleet
+    // nieuw apparaat (met alleen standaard-/lege data) zijn eigen data over de bestaande gedeelde
+    // versie heen kunnen schrijven zodra de verbinding tot stand komt — precies het probleem dat
+    // we willen voorkomen. We wachten dus rustig af tot de echte gedeelde data is opgehaald.
+    saveLocal();
   }
 
   // Alle "self-healing" stappen (ontbrekende standaard-vakken, nieuw seed-materiaal zoals
@@ -1739,13 +1745,16 @@
     }
   }
 
-  function save(){
+  function saveLocal(){
     try{
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ subjects: state.subjects, planner: state.planner, grades: state.grades }));
     }catch(e){
       console.error('Kon niet opslaan', e);
       warnStorageBlocked();
     }
+  }
+  function save(){
+    saveLocal();
     pushToFirebase(false);
   }
   var storageWarned = false;
@@ -1942,7 +1951,7 @@
       });
     };
     if(immediate) doPush();
-    else fbSaveTimer = setTimeout(doPush, 700);
+    else fbSaveTimer = setTimeout(doPush, 60000);
   }
 
 
