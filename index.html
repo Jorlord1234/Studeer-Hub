@@ -677,6 +677,14 @@
   .tests-toggle:hover{ color: var(--accent); }
   .week-table th.has-test{ box-shadow: inset 0 -3px 0 var(--danger); }
   .th-test{ font-size:10.5px; font-weight:700; color: var(--danger); text-transform:uppercase; letter-spacing:0.03em; margin-top:2px; }
+  .th-period{ font-size:10.5px; font-weight:700; color: var(--accent); text-transform:uppercase; letter-spacing:0.03em; margin-top:2px; }
+  .week-table th.has-period{ box-shadow: inset 0 -3px 0 var(--accent); }
+  .home-period-banner{
+    background: var(--accent-soft); color: var(--accent); border: 1.5px solid var(--accent);
+    border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 700;
+    margin-bottom: 16px; cursor: pointer;
+  }
+  .home-period-banner:hover{ opacity: 0.85; }
   .week-day-cell.cell-test{ outline:2px solid var(--danger); outline-offset:-2px; }
   .test-editor-field{ display:block; margin-bottom:12px; }
   .test-editor-field > span{ display:block; font-size:12.5px; color: var(--text-soft); margin-bottom:5px; }
@@ -724,6 +732,23 @@
   .grades-table{ width:100%; border-collapse:collapse; margin-bottom:14px; }
   .grades-table th{ text-align:left; font-size:12px; color: var(--text-soft); padding: 4px 8px 8px; }
   .grades-table td{ padding: 4px 8px; }
+  .grade-row{
+    display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .grade-row:last-of-type{ border-bottom:none; }
+  .grade-type-select{
+    width: 112px; padding: 7px 8px; border-radius:7px; border:1.5px solid var(--border);
+    background: var(--input-bg); color: var(--text); font-family: var(--font-body); font-size:13px;
+  }
+  .grade-name-input{
+    flex:1; min-width: 140px; padding: 7px 10px; border-radius:7px; border:1.5px solid var(--border);
+    background: var(--input-bg); color: var(--text); font-family: var(--font-body); font-size:14px;
+  }
+  .grade-date-input{
+    width: 132px; padding: 7px 8px; border-radius:7px; border:1.5px solid var(--border);
+    background: var(--input-bg); color: var(--text); font-family: var(--font-body); font-size:13px;
+  }
   .grade-input{
     width: 80px; padding: 7px 9px; border-radius:7px; border:1.5px solid var(--border);
     background: var(--input-bg); color: var(--text); font-family: var(--font-body); font-size:14px;
@@ -776,8 +801,10 @@
   .week-label{ font-weight:700; font-size: 16px; }
   .week-note-badge{
     font-size: 12.5px; font-weight:700; color: var(--accent); background: var(--accent-soft);
-    padding: 4px 10px; border-radius: 20px; cursor:pointer;
+    padding: 4px 10px; border-radius: 20px; cursor:pointer; border: 1.5px solid transparent;
   }
+  .week-note-badge-test{ color: var(--danger); background: var(--danger-soft); }
+  .week-note-badge-project{ color: var(--accent); background: var(--accent-soft); border-color: var(--accent); }
   .week-note-add{
     font-size: 12px; color: var(--text-soft); background:transparent; border: 1.5px dashed var(--border);
     border-radius: 20px; padding: 3px 10px; cursor:pointer; font-family: var(--font-body);
@@ -1741,6 +1768,7 @@
     if(!state.planner.title) state.planner.title = 'Planner';
     state.planner.weeks = (state.planner.weeks || []).map(normalizeWeek);
     if(!Array.isArray(state.planner.tests)) state.planner.tests = [];
+    if(!Array.isArray(state.planner.periods)) state.planner.periods = [];
 
     healState();
     // Alleen lokaal opslaan hier — nog GEEN push naar de gedeelde versie. Dit is het allereerste
@@ -2122,7 +2150,7 @@
       });
     };
     if(immediate) doPush();
-    else fbSaveTimer = setTimeout(doPush, 60000);
+    else fbSaveTimer = setTimeout(doPush, 600000);
   }
 
 
@@ -4345,19 +4373,73 @@
     save();
     toast('Nieuwe week toegevoegd — kies een datum');
   }
+  var WEEK_NOTE_PRESETS = ['Toetsweek', 'Projectweek', 'Blokweek', 'Stageweek', 'Vrije week'];
   function editWeekNotePrompt(week){
     var weekId = week.id;
-    openModal({
-      title: 'Weeknotitie (optioneel)',
-      sub: 'Bijvoorbeeld "Toetsweek" — dit komt naast de datum te staan.',
-      placeholder: 'Bijv. Toetsweek',
-      initial: week.note || '',
-      onConfirm: function(name){
-        var liveWeek = findWeekById(weekId) || week;
-        liveWeek.note = name.trim();
-        save(); renderPlannerPanel();
-      }
+    var current = week.note || '';
+    var isPreset = WEEK_NOTE_PRESETS.indexOf(current) !== -1;
+    var body = document.createElement('div');
+
+    var field = document.createElement('label');
+    field.className = 'test-editor-field';
+    var lbl = document.createElement('span');
+    lbl.textContent = 'Type week';
+    var sel = document.createElement('select');
+    var optNone = document.createElement('option');
+    optNone.value = ''; optNone.textContent = 'Geen';
+    sel.appendChild(optNone);
+    WEEK_NOTE_PRESETS.forEach(function(p){
+      var o = document.createElement('option');
+      o.value = p; o.textContent = p;
+      sel.appendChild(o);
     });
+    var optOther = document.createElement('option');
+    optOther.value = '__other__'; optOther.textContent = 'Anders…';
+    sel.appendChild(optOther);
+    sel.value = current === '' ? '' : (isPreset ? current : '__other__');
+    field.appendChild(lbl);
+    field.appendChild(sel);
+    body.appendChild(field);
+
+    var customField = document.createElement('label');
+    customField.className = 'test-editor-field';
+    customField.style.display = sel.value === '__other__' ? '' : 'none';
+    var customLbl = document.createElement('span');
+    customLbl.textContent = 'Eigen omschrijving';
+    var customInput = document.createElement('input');
+    customInput.type = 'text';
+    customInput.value = isPreset ? '' : current;
+    customInput.placeholder = 'Bijv. Excursieweek';
+    customField.appendChild(customLbl);
+    customField.appendChild(customInput);
+    body.appendChild(customField);
+
+    sel.addEventListener('change', function(){
+      customField.style.display = sel.value === '__other__' ? '' : 'none';
+      if(sel.value === '__other__') customInput.focus();
+    });
+
+    var actions = document.createElement('div');
+    actions.className = 'modal-actions';
+    actions.style.marginTop = '14px';
+    var overlay;
+    var cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn';
+    cancelBtn.textContent = 'Annuleren';
+    cancelBtn.addEventListener('click', function(){ overlay.close(); });
+    var saveBtn = document.createElement('button');
+    saveBtn.className = 'btn primary';
+    saveBtn.textContent = 'Opslaan';
+    saveBtn.addEventListener('click', function(){
+      var liveWeek = findWeekById(weekId) || week;
+      var val = sel.value === '__other__' ? customInput.value.trim() : sel.value;
+      liveWeek.note = val;
+      save(); overlay.close(); renderPlannerPanel();
+    });
+    actions.appendChild(cancelBtn);
+    actions.appendChild(saveBtn);
+    body.appendChild(actions);
+    overlay = openOverlay({ title: 'Weeknotitie', bodyEl: body, width: '360px' });
   }
   function deleteWeek(week){
     if(!confirm('Week "' + formatWeekHeading(week.startDate) + '" verwijderen?')) return;
@@ -4580,7 +4662,7 @@
     headRight.className = 'week-head-right';
     if(week.note){
       var noteBadge = document.createElement('span');
-      noteBadge.className = 'week-note-badge';
+      noteBadge.className = 'week-note-badge' + (week.note === 'Toetsweek' ? ' week-note-badge-test' : (['Projectweek', 'Blokweek'].indexOf(week.note) !== -1 ? ' week-note-badge-project' : ''));
       noteBadge.textContent = week.note;
       noteBadge.title = 'Klik om aan te passen';
       noteBadge.addEventListener('click', function(){ editWeekNotePrompt(week); });
@@ -4641,6 +4723,15 @@
         tm.textContent = 'Toets';
         tm.title = dayTests.map(function(t){ return (plannerSubjectLabel(t.subjectId) || 'Toets') + (t.title ? ': ' + t.title : ''); }).join('\n');
         th.appendChild(tm);
+      }
+      var dayPeriods = periodsOnDate(isoDate(dayDates[i]));
+      if(dayPeriods.length){
+        th.classList.add('has-period');
+        var pm = document.createElement('div');
+        pm.className = 'th-period';
+        pm.textContent = dayPeriods[0].type;
+        pm.title = dayPeriods.map(function(p){ return p.type + (p.label ? ': ' + p.label : ''); }).join('\n');
+        th.appendChild(pm);
       }
       trh.appendChild(th);
     });
@@ -4802,6 +4893,29 @@
     row.addEventListener('click', onClick);
     return row;
   }
+  // Wijzigingen aan een toets via de editor werken door naar het gekoppelde vakje in de
+  // planner (punt 4: toetsen-ding en planner blijven bij elkaar).
+  function unlinkCellFromTest(test){
+    if(!test || !test.cellKey) return;
+    var parts = test.cellKey.split('|');
+    var week = findWeekById(parts[0]);
+    if(!week) return;
+    var cellData = getCellData(week, parts[1], parts[2]);
+    cellData.important = false;
+    setCellData(week, parts[1], parts[2], cellData);
+  }
+  function syncCellFromTest(draft, oldTest){
+    if(oldTest && oldTest.cellKey) unlinkCellFromTest(oldTest);
+    var d = dateFromISO(draft.date);
+    var monday = mondayOfWeek(d);
+    var week = getOrCreateWeek(isoDate(monday));
+    var dayKey = PLANNER_DAYS[(d.getDay() + 6) % 7].key;
+    var cellData = getCellData(week, draft.subjectId, dayKey);
+    cellData.important = true;
+    if(draft.title) cellData.text = draft.title;
+    setCellData(week, draft.subjectId, dayKey, cellData);
+    draft.cellKey = cellTestKey(week.id, draft.subjectId, dayKey);
+  }
   function openTestEditor(test){
     var isNew = !test;
     var draft = test ? Object.assign({}, test) : { id: uid('test'), date: isoDate(new Date()), subjectId: (state.planner.subjects[0] || {}).id || '', title: '' };
@@ -4856,6 +4970,7 @@
       delBtn.style.color = 'var(--danger)';
       delBtn.textContent = 'Verwijderen';
       delBtn.addEventListener('click', function(){
+        unlinkCellFromTest(test);
         state.planner.tests = ensureTests().filter(function(x){ return x.id !== test.id; });
         save();
         overlay.close();
@@ -4873,6 +4988,7 @@
     saveBtn.addEventListener('click', function(){
       if(!draft.date){ toast('Kies eerst een datum'); return; }
       draft.title = (draft.title || '').trim();
+      syncCellFromTest(draft, isNew ? null : test);
       var list = ensureTests();
       if(isNew) list.push(draft);
       else {
@@ -4888,10 +5004,178 @@
     body.appendChild(actions);
     overlay = openOverlay({ title: isNew ? 'Toets toevoegen' : 'Toets bewerken', bodyEl: body, width: '380px' });
   }
+  // ---------- Periodes (vakanties, studiedagen, blokweken — langer dan 1 week) ----------
+  var PERIOD_TYPES = ['Vakantie', 'Studiedag(en)', 'Blokweek / projectperiode', 'Stage', 'Anders'];
+  function ensurePeriods(){
+    if(!state.planner) return [];
+    if(!Array.isArray(state.planner.periods)) state.planner.periods = [];
+    return state.planner.periods;
+  }
+  function periodsOnDate(iso){
+    return ensurePeriods().filter(function(p){ return p.startDate <= iso && iso <= p.endDate; });
+  }
+  function formatDateRange(startISO, endISO){
+    var s = dateFromISO(startISO), e = dateFromISO(endISO);
+    if(startISO === endISO) return formatShortDate(s);
+    return formatShortDate(s) + ' t/m ' + formatShortDate(e);
+  }
+  function periodStatusLabel(p){
+    var today = isoDate(new Date());
+    if(p.startDate <= today && today <= p.endDate) return 'nu bezig — tot ' + formatShortDate(dateFromISO(p.endDate));
+    var d = daysUntil(p.startDate);
+    if(d === 0) return 'begint vandaag';
+    if(d === 1) return 'begint morgen';
+    if(d < 14) return 'begint over ' + d + ' dagen';
+    return 'begint over ' + Math.round(d / 7) + ' weken';
+  }
+  function periodRow(p, onClick){
+    var row = document.createElement('div');
+    row.className = 'home-today-item test-row';
+    row.title = 'Klik om te bewerken';
+    var when = document.createElement('span');
+    when.className = 'home-today-vak';
+    when.textContent = formatDateRange(p.startDate, p.endDate);
+    var txt = document.createElement('span');
+    txt.className = 'home-today-text';
+    txt.textContent = (p.type || 'Anders') + (p.label ? ' — ' + p.label : '');
+    var status = document.createElement('span');
+    status.className = 'test-count';
+    status.textContent = periodStatusLabel(p);
+    row.appendChild(when);
+    row.appendChild(txt);
+    row.appendChild(status);
+    row.addEventListener('click', onClick);
+    return row;
+  }
+  function openPeriodEditor(period){
+    var isNew = !period;
+    var todayISO = isoDate(new Date());
+    var draft = period ? Object.assign({}, period) : { id: uid('period'), type: PERIOD_TYPES[0], label: '', startDate: todayISO, endDate: todayISO };
+    var body = document.createElement('div');
+
+    var typeField = document.createElement('label');
+    typeField.className = 'test-editor-field';
+    var typeLbl = document.createElement('span');
+    typeLbl.textContent = 'Soort';
+    var typeSel = document.createElement('select');
+    PERIOD_TYPES.forEach(function(t){
+      var o = document.createElement('option');
+      o.value = t; o.textContent = t;
+      if(t === draft.type) o.selected = true;
+      typeSel.appendChild(o);
+    });
+    typeSel.addEventListener('change', function(){ draft.type = typeSel.value; });
+    typeField.appendChild(typeLbl);
+    typeField.appendChild(typeSel);
+    body.appendChild(typeField);
+
+    var labelField = document.createElement('label');
+    labelField.className = 'test-editor-field';
+    var labelLbl = document.createElement('span');
+    labelLbl.textContent = 'Omschrijving (optioneel)';
+    var labelInput = document.createElement('input');
+    labelInput.type = 'text';
+    labelInput.placeholder = 'Bijv. Herfstvakantie';
+    labelInput.value = draft.label || '';
+    labelInput.addEventListener('input', function(){ draft.label = labelInput.value; });
+    labelField.appendChild(labelLbl);
+    labelField.appendChild(labelInput);
+    body.appendChild(labelField);
+
+    var startField = document.createElement('div');
+    startField.className = 'test-editor-field';
+    var startLbl = document.createElement('span');
+    startLbl.textContent = 'Eerste dag';
+    startField.appendChild(startLbl);
+    startField.appendChild(createDateDropdowns(draft.startDate, function(iso){ draft.startDate = iso; }));
+    body.appendChild(startField);
+
+    var endField = document.createElement('div');
+    endField.className = 'test-editor-field';
+    var endLbl = document.createElement('span');
+    endLbl.textContent = 'Laatste dag';
+    endField.appendChild(endLbl);
+    endField.appendChild(createDateDropdowns(draft.endDate, function(iso){ draft.endDate = iso; }));
+    body.appendChild(endField);
+
+    var actions = document.createElement('div');
+    actions.className = 'modal-actions';
+    actions.style.marginTop = '14px';
+    var overlay;
+    if(!isNew){
+      var delBtn = document.createElement('button');
+      delBtn.className = 'btn';
+      delBtn.style.marginRight = 'auto';
+      delBtn.style.color = 'var(--danger)';
+      delBtn.textContent = 'Verwijderen';
+      delBtn.addEventListener('click', function(){
+        state.planner.periods = ensurePeriods().filter(function(x){ return x.id !== period.id; });
+        save();
+        overlay.close();
+        renderAll();
+      });
+      actions.appendChild(delBtn);
+    }
+    var cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn';
+    cancelBtn.textContent = 'Annuleren';
+    cancelBtn.addEventListener('click', function(){ overlay.close(); });
+    var saveBtn = document.createElement('button');
+    saveBtn.className = 'btn primary';
+    saveBtn.textContent = 'Opslaan';
+    saveBtn.addEventListener('click', function(){
+      if(!draft.startDate || !draft.endDate){ toast('Kies eerst een begin- en einddatum'); return; }
+      if(draft.endDate < draft.startDate){ var tmp = draft.startDate; draft.startDate = draft.endDate; draft.endDate = tmp; }
+      draft.label = (draft.label || '').trim();
+      var list = ensurePeriods();
+      if(isNew) list.push(draft);
+      else {
+        var i = list.findIndex(function(x){ return x.id === period.id; });
+        if(i > -1) list[i] = draft;
+      }
+      save();
+      overlay.close();
+      renderAll();
+    });
+    actions.appendChild(cancelBtn);
+    actions.appendChild(saveBtn);
+    body.appendChild(actions);
+    overlay = openOverlay({ title: isNew ? 'Periode toevoegen' : 'Periode bewerken', bodyEl: body, width: '380px' });
+  }
+  function renderPeriodsCard(){
+    var todayISO = isoDate(new Date());
+    var relevant = ensurePeriods().filter(function(p){ return p.endDate >= todayISO && daysUntil(p.startDate) <= 30; }).sort(function(a, b){ return a.startDate < b.startDate ? -1 : (a.startDate > b.startDate ? 1 : 0); });
+
+    var card = document.createElement('div');
+    card.className = 'section-card';
+    var head = document.createElement('div');
+    head.className = 'section-head';
+    var label = document.createElement('span');
+    label.className = 'section-label';
+    label.textContent = 'Periodes';
+    head.appendChild(label);
+    var addBtn = document.createElement('button');
+    addBtn.className = 'chip chip-add';
+    addBtn.textContent = '＋ Periode';
+    addBtn.addEventListener('click', function(){ openPeriodEditor(null); });
+    head.appendChild(addBtn);
+    card.appendChild(head);
+
+    var body = document.createElement('div');
+    body.className = 'section-body';
+    if(!relevant.length){
+      var empty = document.createElement('p');
+      empty.className = 'empty';
+      empty.textContent = 'Geen vakanties, studiedagen of andere periodes gepland.';
+      body.appendChild(empty);
+    }
+    relevant.forEach(function(p){ body.appendChild(periodRow(p, function(){ openPeriodEditor(p); })); });
+    card.appendChild(body);
+    return card;
+  }
+
   function renderTestsCard(){
-    var tests = ensureTests().filter(function(t){ return daysUntil(t.date) <= 14; }).slice().sort(function(a, b){ return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
-    var upcoming = tests.filter(function(t){ return daysUntil(t.date) >= 0; });
-    var past = tests.filter(function(t){ return daysUntil(t.date) < 0; }).reverse();
+    var upcoming = ensureTests().filter(function(t){ return daysUntil(t.date) >= 0 && daysUntil(t.date) <= 14; }).sort(function(a, b){ return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
 
     var card = document.createElement('div');
     card.className = 'section-card';
@@ -4917,19 +5201,6 @@
       body.appendChild(empty);
     }
     upcoming.forEach(function(t){ body.appendChild(testRow(t, function(){ openTestEditor(t); })); });
-    if(past.length){
-      var toggle = document.createElement('button');
-      toggle.className = 'tests-toggle';
-      toggle.textContent = (state.showPastTests ? 'Verberg' : 'Toon') + ' eerdere toetsen (' + past.length + ')';
-      toggle.addEventListener('click', function(){ state.showPastTests = !state.showPastTests; renderPlannerPanel(); });
-      body.appendChild(toggle);
-      if(state.showPastTests){
-        var pastWrap = document.createElement('div');
-        pastWrap.style.marginTop = '8px';
-        past.forEach(function(t){ pastWrap.appendChild(testRow(t, function(){ openTestEditor(t); })); });
-        body.appendChild(pastWrap);
-      }
-    }
     card.appendChild(body);
     return card;
   }
@@ -4960,6 +5231,7 @@
     contentEl.appendChild(renderRulesCard());
     contentEl.appendChild(renderSubjectsManager());
     contentEl.appendChild(renderTestsCard());
+    contentEl.appendChild(renderPeriodsCard());
 
     var currentStart = currentPlannerWeekStart();
     var week = getOrCreateWeek(currentStart);
@@ -4991,6 +5263,22 @@
     h1.textContent = greetingForNow();
     titleRow.appendChild(h1);
     contentEl.appendChild(titleRow);
+
+    var todayISOForPeriod = isoDate(new Date());
+    var activePeriods = periodsOnDate(todayISOForPeriod);
+    var nextPeriod = ensurePeriods().filter(function(p){ return p.startDate > todayISOForPeriod && daysUntil(p.startDate) <= 14; }).sort(function(a, b){ return a.startDate < b.startDate ? -1 : 1; })[0];
+    if(activePeriods.length || nextPeriod){
+      var periodBanner = document.createElement('div');
+      periodBanner.className = 'home-period-banner';
+      if(activePeriods.length){
+        var ap = activePeriods[0];
+        periodBanner.textContent = 'Op dit moment: ' + ap.type + (ap.label ? ' — ' + ap.label : '') + ' (tot ' + formatShortDate(dateFromISO(ap.endDate)) + ')';
+      } else {
+        periodBanner.textContent = 'Binnenkort: ' + nextPeriod.type + (nextPeriod.label ? ' — ' + nextPeriod.label : '') + ' (' + periodStatusLabel(nextPeriod) + ')';
+      }
+      periodBanner.addEventListener('click', function(){ goToPlanner(); });
+      contentEl.appendChild(periodBanner);
+    }
 
     var today = new Date();
     var todayWeek = findWeekCoveringDate(today);
@@ -5095,6 +5383,13 @@
   }
 
   // ---------- Cijfers ----------
+  var GRADE_TYPES = [
+    { key: 'toets', label: 'Toets' },
+    { key: 'so', label: 'SO' },
+    { key: 'pw', label: 'PW' },
+    { key: 'mondeling', label: 'Mondeling' },
+    { key: 'overig', label: 'Overig' }
+  ];
   function getGradesFor(subjId){
     if(!state.grades[subjId]) state.grades[subjId] = { items: [] };
     return state.grades[subjId];
@@ -5151,44 +5446,75 @@
     var body = document.createElement('div');
     body.className = 'section-body';
 
-    var table = document.createElement('table');
-    table.className = 'grades-table';
-    var thead = document.createElement('thead');
-    thead.innerHTML = '<tr><th>Cijfer</th><th>Weging</th><th></th></tr>';
-    table.appendChild(thead);
-    var tbody = document.createElement('tbody');
+    var table = document.createElement('div');
+    table.className = 'grades-list';
+    g.items.sort(function(a, b){
+      if(!a.datum && !b.datum) return 0;
+      if(!a.datum) return 1;
+      if(!b.datum) return -1;
+      return a.datum < b.datum ? -1 : (a.datum > b.datum ? 1 : 0);
+    });
     g.items.forEach(function(item){
-      var tr = document.createElement('tr');
-      var tdC = document.createElement('td');
+      if(!item.type) item.type = 'toets';
+      var row = document.createElement('div');
+      row.className = 'grade-row';
+
+      var typeSel = document.createElement('select');
+      typeSel.className = 'grade-type-select';
+      GRADE_TYPES.forEach(function(t){
+        var o = document.createElement('option');
+        o.value = t.key; o.textContent = t.label;
+        if(t.key === item.type) o.selected = true;
+        typeSel.appendChild(o);
+      });
+      typeSel.addEventListener('change', function(){ item.type = typeSel.value; save(); });
+      row.appendChild(typeSel);
+
+      var nameIn = document.createElement('input');
+      nameIn.type = 'text';
+      nameIn.className = 'grade-name-input';
+      nameIn.placeholder = 'Omschrijving (optioneel)';
+      nameIn.value = item.naam || '';
+      nameIn.addEventListener('input', function(){ item.naam = nameIn.value; save(); });
+      row.appendChild(nameIn);
+
+      var dateIn = document.createElement('input');
+      dateIn.type = 'date';
+      dateIn.className = 'grade-date-input';
+      dateIn.value = item.datum || '';
+      dateIn.addEventListener('input', function(){ item.datum = dateIn.value; save(); });
+      row.appendChild(dateIn);
+
       var cIn = document.createElement('input');
       cIn.type = 'number'; cIn.step = '0.1'; cIn.min = '1'; cIn.max = '10';
       cIn.value = item.cijfer; cIn.className = 'grade-input';
+      cIn.placeholder = 'Cijfer';
       cIn.addEventListener('input', function(){ item.cijfer = cIn.value; save(); updateGradeSummary(); });
-      tdC.appendChild(cIn);
-      var tdW = document.createElement('td');
+      row.appendChild(cIn);
+
       var wIn = document.createElement('input');
       wIn.type = 'number'; wIn.step = '1'; wIn.min = '1';
       wIn.value = item.weging; wIn.className = 'grade-input';
+      wIn.placeholder = 'Weging';
       wIn.addEventListener('input', function(){ item.weging = wIn.value; save(); updateGradeSummary(); });
-      tdW.appendChild(wIn);
-      var tdX = document.createElement('td');
+      row.appendChild(wIn);
+
       var delBtn = iconBtn('trash', null, 'icon-btn danger');
       delBtn.addEventListener('click', function(){
         g.items = g.items.filter(function(i){ return i.id !== item.id; });
         save(); renderGradesPanel();
       });
-      tdX.appendChild(delBtn);
-      tr.appendChild(tdC); tr.appendChild(tdW); tr.appendChild(tdX);
-      tbody.appendChild(tr);
+      row.appendChild(delBtn);
+
+      table.appendChild(row);
     });
-    table.appendChild(tbody);
     body.appendChild(table);
 
     var addBtn = document.createElement('button');
     addBtn.className = 'add-section-btn';
     addBtn.textContent = '＋ Cijfer toevoegen';
     addBtn.addEventListener('click', function(){
-      g.items.push({ id: uid('grade'), cijfer: '', weging: '1' });
+      g.items.push({ id: uid('grade'), naam: '', type: 'toets', datum: '', cijfer: '', weging: '1' });
       save(); renderGradesPanel();
     });
     body.appendChild(addBtn);
@@ -5563,6 +5889,12 @@
             list.push({ id: uid('test'), date: t.date, subjectId: sid, title: t.title || '' });
           });
           if(!state.planner.rules && parsed.planner.rules){ state.planner.rules = parsed.planner.rules; }
+          (parsed.planner.periods || []).forEach(function(p){
+            if(!p || !p.startDate || !p.endDate) return;
+            var list = ensurePeriods();
+            if(list.some(function(x){ return x.startDate === p.startDate && x.endDate === p.endDate && x.type === p.type && (x.label || '') === (p.label || ''); })) return;
+            list.push({ id: uid('period'), type: p.type || 'Anders', label: p.label || '', startDate: p.startDate, endDate: p.endDate });
+          });
         }
 
         save();
