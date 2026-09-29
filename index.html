@@ -302,7 +302,7 @@
   #content-scroll{
     flex:1;
     overflow-y:auto;
-    padding: 32px 40px 80px;
+    padding: 32px 40px 32px;
   }
   .content-inner{ max-width: 780px; margin: 0 auto; }
   .content-inner.wide{ max-width: 1140px; }
@@ -605,6 +605,86 @@
   .overlay-body{ padding: 16px 18px; overflow-y:auto; }
   .add-item-chooser{ display:flex; flex-direction:column; gap:8px; }
 
+  /* ---------- Oefentoets ---------- */
+  .oefentoets-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family: var(--font-body); font-size: 13px; font-weight:700;
+    padding: 7px 13px; border-radius: 8px;
+    border: 1.5px solid var(--accent);
+    background: var(--accent-soft); color: var(--accent);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .oefentoets-btn:hover{ background: var(--accent); color:#fff; }
+  .quiz-setup-info{ font-size:13px; color: var(--text-soft); margin: 12px 0 14px; line-height:1.5; }
+  .quiz-count-row{ display:flex; align-items:center; gap:10px; }
+  .quiz-count-row label{ font-size:13.5px; color: var(--text-soft); }
+  .quiz-progress{
+    font-size:12px; font-weight:700; color: var(--text-soft);
+    text-transform:uppercase; letter-spacing:0.03em; margin-bottom:16px;
+    display:flex; justify-content:space-between;
+  }
+  .quiz-prompt{ margin-bottom:18px; }
+  .quiz-prompt-label{ font-size:12.5px; color: var(--text-soft); margin-bottom:6px; }
+  .quiz-prompt-text{ font-size:17px; font-weight:700; line-height:1.5; }
+  .quiz-options{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+  .quiz-option{
+    text-align:left;
+    padding: 11px 14px;
+    border-radius: 9px;
+    border: 1.5px solid var(--border);
+    background: var(--panel-bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14.5px;
+    cursor:pointer;
+    line-height:1.4;
+  }
+  .quiz-option:hover:not(:disabled){ border-color: var(--accent); background: var(--accent-soft); }
+  .quiz-option:disabled{ cursor:default; }
+  .quiz-option.correct{ border-color: #2E9E6D; background: rgba(46,158,109,0.16); color: var(--text); font-weight:700; }
+  .quiz-option.incorrect{ border-color: var(--danger); background: var(--danger-soft); color: var(--danger); font-weight:700; }
+  .quiz-next-btn{ width:100%; }
+  .quiz-result{ text-align:center; padding: 10px 0 6px; }
+  .quiz-result-score{ font-family: var(--font-display); font-size:38px; font-weight:600; color: var(--text); }
+  .quiz-result-pct{ font-size:15px; color: var(--accent); font-weight:700; margin-top:2px; }
+  .quiz-result-msg{ color: var(--text-soft); margin-top:10px; font-size:14px; }
+  .quiz-mode-label{ font-size:12px; font-weight:700; color: var(--text-soft); text-transform:uppercase; letter-spacing:0.03em; margin: 14px 0 6px; }
+  .quiz-type-wrap{ margin-bottom:14px; }
+  .quiz-type-input{
+    width:100%; padding: 11px 13px; border-radius:9px; border:1.5px solid var(--border);
+    background: var(--input-bg); color: var(--text); font-family: var(--font-body); font-size:15px;
+  }
+  .quiz-type-input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .quiz-special-row{ display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+  .quiz-special-btn{
+    min-width:32px; padding:4px 8px; border-radius:6px; border:1.5px solid var(--border);
+    background: var(--panel-bg); color: var(--text); font-size:14px; cursor:pointer; font-family: var(--font-body);
+  }
+  .quiz-special-btn:hover{ border-color: var(--accent); color: var(--accent); }
+  .quiz-feedback{ border-radius:9px; padding:11px 14px; margin-bottom:14px; font-size:14.5px; line-height:1.5; }
+  .quiz-feedback.ok{ border:1.5px solid #2E9E6D; background: rgba(46,158,109,0.14); }
+  .quiz-feedback.bad{ border:1.5px solid var(--danger); background: var(--danger-soft); }
+  .quiz-feedback-head{ font-weight:700; margin-bottom:4px; }
+  .quiz-answer-label{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; color: var(--text-soft); }
+  .quiz-override-btn{ margin-top:10px; }
+
+  /* ---------- Toetsdatums ---------- */
+  .test-row{ cursor:pointer; }
+  .test-row + .test-row{ margin-top:6px; }
+  .test-count{ margin-left:auto; font-size:12.5px; font-weight:700; white-space:nowrap; }
+  .tests-toggle{ margin-top:10px; font-size:12.5px; color: var(--text-soft); background:transparent; border:none; cursor:pointer; font-family: var(--font-body); padding:2px 0; }
+  .tests-toggle:hover{ color: var(--accent); }
+  .week-table th.has-test{ box-shadow: inset 0 -3px 0 var(--danger); }
+  .th-test{ font-size:10.5px; font-weight:700; color: var(--danger); text-transform:uppercase; letter-spacing:0.03em; margin-top:2px; }
+  .week-day-cell.cell-test{ outline:2px solid var(--danger); outline-offset:-2px; }
+  .test-editor-field{ display:block; margin-bottom:12px; }
+  .test-editor-field > span{ display:block; font-size:12.5px; color: var(--text-soft); margin-bottom:5px; }
+  .test-editor-field input[type=text], .test-editor-field select{
+    width:100%; padding:8px 10px; border-radius:7px; border:1.5px solid var(--border);
+    background: var(--input-bg); color: var(--text); font-family: var(--font-body); font-size:14px;
+  }
+
   /* ---------- Home ---------- */
   .home-today-list{ display:flex; flex-direction:column; gap:8px; }
   .home-today-item{
@@ -820,7 +900,7 @@
 
   @media (max-width: 720px){
     #sidebar{ width: 220px; min-width:220px; }
-    #content-scroll{ padding: 22px 16px 60px; }
+    #content-scroll{ padding: 22px 16px 24px; }
     #topbar{ padding: 12px 16px; }
   }
 </style>
@@ -1648,6 +1728,7 @@
     }
     if(!state.planner.title) state.planner.title = 'Planner';
     state.planner.weeks = (state.planner.weeks || []).map(normalizeWeek);
+    if(!Array.isArray(state.planner.tests)) state.planner.tests = [];
 
     healState();
     // Alleen lokaal opslaan hier — nog GEEN push naar de gedeelde versie. Dit is het allereerste
@@ -1791,25 +1872,42 @@
   // helemaal tot stand was gekomen (fbReady was nog false). Zodra onze eigen push is
   // gelukt, komt er vanzelf weer een normale, actuele snapshot binnen.
   var fbPushPending = false;
+  // Wordt pas true zodra we in DEZE sessie minstens één keer de echte gedeelde data hebben
+  // toegepast. Vóór dat moment mag een lokale wijziging NOOIT voorrang krijgen boven wat er
+  // al gedeeld staat — anders overschrijft een nieuw/leeg apparaat dat toevallig iets typt
+  // vlak voordat de verbinding tot stand komt, alle bestaande gedeelde data met zijn eigen
+  // (nog niet-gesyncte) lokale staat. Dit was precies de bug: fbPushPending stond dan al op
+  // true zodra de eerste snapshot binnenkwam, waardoor die snapshot werd genegeerd.
+  var fbHasSyncedOnce = false;
   function attachSnapshotListener(){
     fbDocRef.onSnapshot(function(doc){
       fbRetryAttempt = 0; // succesvolle verbinding: reset de backoff
       fbEverConnected = true;
-      if(fbPushPending){
-        // Er staat nog een lokale wijziging klaar (mogelijk gemaakt vóórdat we hier
-        // verbonden waren) — deze binnenkomende snapshot negeren en onze versie alsnog
-        // meteen versturen, in plaats van de lokale wijziging stilletjes te verliezen.
+      if(fbPushPending && fbHasSyncedOnce){
+        // We hebben deze sessie al minstens één keer de echte gedeelde data gezien, dus onze
+        // lokale staat is daarop gebaseerd. Er staat een net gemaakte lokale wijziging klaar
+        // (mogelijk gemaakt vóórdat deze snapshot binnenkwam) — die versturen we, in plaats
+        // van hem stilletjes te verliezen.
         pushToFirebase(true);
         return;
       }
       if(doc.exists){
         var data = doc.data();
         if(data && data.payload){
+          // Ongeacht een eventuele pending lokale wijziging: dit is de echte gedeelde data en
+          // die passen we altijd toe voordat we ooit iets terugschrijven. Tekst waar je op dit
+          // moment middenin aan het typen bent, blijft behouden (zie applyRemotePayload); een
+          // eventuele niet-gesynced lokale wijziging van vóór deze eerste sync kan verloren
+          // gaan, maar dat weegt niet op tegen het risico dat alle bestaande gedeelde data
+          // wordt overschreven.
+          fbPushPending = false;
           applyRemotePayload(data.payload);
+          fbHasSyncedOnce = true;
         }
       } else {
         // Nog geen gedeeld document: dit apparaat is de eerste, dus die zet de huidige lokale
         // staat neer als startpunt voor de gedeelde versie.
+        fbHasSyncedOnce = true;
         pushToFirebase(true);
       }
     }, function(err){
@@ -1982,7 +2080,8 @@
     attachment: '<svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 6.5l-6 6a2.1 2.1 0 0 0 3 3l6.2-6.2a3.5 3.5 0 0 0-5-5L5.5 10.5a5 5 0 0 0 7 7"/></svg>',
     table: '<svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="12" rx="1.5"/><path d="M3 8.5h14M8.2 4v12"/></svg>',
     dropdown: '<svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="8" rx="2"/><path d="M12.5 10l-2 2-2-2"/></svg>',
-    swap: '<svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M12 4l3 3-3 3M16 13H5M8 10l-3 3 3 3"/></svg>'
+    swap: '<svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M12 4l3 3-3 3M16 13H5M8 10l-3 3 3 3"/></svg>',
+    quiz: '<svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3.2" width="11" height="14" rx="1.6"/><path d="M7.5 3.2V3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v.2"/><path d="M7 9.3l1.8 1.8L13 7"/><path d="M7 13.8h6"/></svg>'
   };
   function iconBtn(iconKey, text, className){
     var btn = document.createElement('button');
@@ -2188,6 +2287,697 @@
     if(right) return 'right';
     if(left) return 'left';
     return null;
+  }
+
+  // ---------- Oefentoets (automatisch gegenereerde quiz uit "Belangrijke begrippen") ----------
+  function renderInline(text){
+    var extraction = extractMath(text || '');
+    var html = inlineFormat(extraction.text);
+    return substituteMath(html, extraction.mathStore);
+  }
+  function findColonOutsideMath(s){
+    var inMath = false;
+    for(var i=0;i<s.length;i++){
+      var ch = s.charAt(i);
+      if(ch === '$'){ inMath = !inMath; continue; }
+      if(ch === ':' && !inMath) return i;
+    }
+    return -1;
+  }
+  function fixMath(s){
+    var n = (s.match(/\$/g) || []).length;
+    return (n % 2 === 1) ? s.replace(/\$/g, '') : s;
+  }
+  function truncateText(s, max){
+    if(s.length <= max) return s;
+    var cut = s.slice(0, max);
+    var sentEnd = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '));
+    if(sentEnd > max * 0.5) return cut.slice(0, sentEnd + 1).trim();
+    var lastSpace = cut.lastIndexOf(' ');
+    if(lastSpace > max * 0.6) cut = cut.slice(0, lastSpace);
+    return cut.trim().replace(/[,;:\-–(]+$/, '') + '…';
+  }
+  var GENERIC_FACT_TERMS = ['formule'];
+  var SKIP_TERM_PREFIXES = ['let op', 'belangrijk', 'cruciaal', 'kritieke', 'groot gevaar', 'voorbeeld', 'tip', 'waarschuwing', 'opgelet', 'nb', 'noot', 'conclusie'];
+  function parseBegrippenLine(raw){
+    var line = (raw || '').trim();
+    if(line.charAt(0) !== '-') return null;
+    line = line.slice(1).trim().replace(/\*\*/g, '');
+    var idx = findColonOutsideMath(line);
+    if(idx === -1) return null;
+    var term = line.slice(0, idx).trim();
+    var def = line.slice(idx + 1).trim();
+    if(!term || def.length < 3) return null;
+    var lowTerm = term.toLowerCase();
+    // Zinnen en losse opmerkingen ("Let op ...", "Voorbeeld: ...") zijn geen begrippen
+    if(term.split(/\s+/).length > 6 || term.length > 60) return null;
+    for(var i=0;i<SKIP_TERM_PREFIXES.length;i++){
+      var p = SKIP_TERM_PREFIXES[i];
+      if(lowTerm === p || lowTerm.indexOf(p + ' ') === 0) return null;
+    }
+    term = fixMath(term);
+    def = fixMath(truncateText(def, 280));
+    var generic = GENERIC_FACT_TERMS.indexOf(lowTerm) !== -1;
+    return { term: term, def: def, genericTerm: generic };
+  }
+  function extractBegrippenFromParagraph(para){
+    var out = [];
+    (para.sections || []).forEach(function(sec){
+      (sec.content || '').split('\n').forEach(function(line){
+        var pair = parseBegrippenLine(line);
+        if(pair) out.push(pair);
+      });
+    });
+    (para.children || []).forEach(function(child){ out = out.concat(extractBegrippenFromParagraph(child)); });
+    return out;
+  }
+  function extractBegrippenFromChapter(chap){
+    var out = [];
+    (chap.paragraphs || []).forEach(function(p){ out = out.concat(extractBegrippenFromParagraph(p)); });
+    return out;
+  }
+  function extractBegrippenFromSubject(subj){
+    var out = [];
+    (subj.chapters || []).forEach(function(c){ out = out.concat(extractBegrippenFromChapter(c)); });
+    return out;
+  }
+  function dedupeBegrippen(list){
+    var seen = {};
+    var seenTerm = {};
+    return list.filter(function(b){
+      var key = (b.term + '|' + b.def).toLowerCase();
+      if(seen[key]) return false;
+      seen[key] = true;
+      if(!b.genericTerm){
+        var tkey = b.term.toLowerCase();
+        if(seenTerm[tkey]) return false; // zelfde begrip nog eens met andere uitleg: eerste houden
+        seenTerm[tkey] = true;
+      }
+      return true;
+    });
+  }
+  function shuffleArr(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+  function wordSet(s){
+    var set = {};
+    s.toLowerCase().replace(/[^a-z0-9à-ÿ]+/g, ' ').split(' ').forEach(function(w){ if(w.length > 3) set[w] = true; });
+    return set;
+  }
+  function similarity(a, b){
+    var A = wordSet(a), B = wordSet(b), inter = 0, union = 0, k;
+    for(k in A){ union++; if(B[k]) inter++; }
+    for(k in B){ if(!A[k]) union++; }
+    return union ? inter / union : 0;
+  }
+  function buildQuizQuestions(testPool, distractorPool, count){
+    // Losse "Formule:"-regels zijn als kale vraag dubbelzinnig: niet als vraag of afleider gebruiken
+    testPool = testPool.filter(function(b){ return !b.genericTerm; });
+    distractorPool = distractorPool.filter(function(b){ return !b.genericTerm; });
+    // Elke ronde gebruikt elk leerpunt één keer; in een tweede ronde wordt de richting omgedraaid
+    var entries = [];
+    var firstDir = new Map();
+    var round = 0;
+    while(entries.length < count && round < 2){
+      var shuffled = shuffleArr(testPool);
+      shuffled.forEach(function(item){
+        if(entries.length >= count) return;
+        var askTerm;
+        if(round === 0){
+          askTerm = item.genericTerm ? true : Math.random() < 0.5;
+          firstDir.set(item, askTerm);
+        } else {
+          if(item.genericTerm) return; // zou dezelfde vraag zijn
+          askTerm = !firstDir.get(item);
+        }
+        entries.push({ item: item, askTerm: askTerm });
+      });
+      round++;
+    }
+    // Voorkom dezelfde vraag twee keer achter elkaar
+    for(var i=1;i<entries.length;i++){
+      if(entries[i].item === entries[i-1].item && i + 1 < entries.length){
+        var t = entries[i]; entries[i] = entries[i+1]; entries[i+1] = t;
+      }
+    }
+    var questions = [];
+    entries.forEach(function(entry){
+      var item = entry.item, askTerm = entry.askTerm;
+      var correctText = askTerm ? item.def : item.term;
+      var candidates = distractorPool.filter(function(b){
+        return askTerm ? b.def !== item.def : b.term !== item.term;
+      });
+      var wrongTexts = [];
+      shuffleArr(candidates).forEach(function(b){
+        if(wrongTexts.length >= 3) return;
+        var txt = askTerm ? b.def : b.term;
+        if(txt.toLowerCase() === correctText.toLowerCase()) return;
+        if(similarity(txt, correctText) > 0.5) return; // te veel op het juiste antwoord lijkend
+        for(var j=0;j<wrongTexts.length;j++){
+          if(txt.toLowerCase() === wrongTexts[j].toLowerCase() || similarity(txt, wrongTexts[j]) > 0.6) return;
+        }
+        wrongTexts.push(txt);
+      });
+      if(!wrongTexts.length) return; // niet genoeg afleiders, sla deze vraag over
+      var options = shuffleArr([correctText].concat(wrongTexts));
+      questions.push({ type: 'mc', prompt: askTerm ? item.term : item.def, askTerm: askTerm, correct: correctText, options: options });
+    });
+    return questions;
+  }
+  // ---------- Formules en typ-vragen ----------
+  var GREEK_MAP = { 'Δ':'delta','δ':'delta','ρ':'rho','π':'pi','λ':'lambda','η':'eta','σ':'sigma','α':'alpha','β':'beta','γ':'gamma','μ':'mu','ω':'omega','Ω':'omega','τ':'tau','θ':'theta','φ':'phi' };
+  var SUB_MAP = { 'ₐ':'a','ₑ':'e','ₒ':'o','ₓ':'x','ₕ':'h','ₖ':'k','ₗ':'l','ₘ':'m','ₙ':'n','ₚ':'p','ₛ':'s','ₜ':'t','₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9' };
+  function normFormula(str){
+    var t = (str == null ? '' : String(str));
+    t = t.replace(/\\left|\\right/g, '').replace(/\\text\{([^}]*)\}/g, '$1');
+    t = t.replace(/\\d?frac\{([^{}]*)\}\{([^{}]*)\}/g, '($1)/($2)');
+    t = t.replace(/\\(cdot|times)/g, '*');
+    t = t.replace(/\\([A-Za-z]+)/g, '$1');
+    t = t.replace(/[ΔδρπλησαβγμωΩτθφ]/g, function(c){ return GREEK_MAP[c]; });
+    t = t.replace(/[ₐₑₒₓₕₖₗₘₙₚₛₜ₀-₉]/g, function(c){ return SUB_MAP[c] || ''; });
+    t = t.replace(/⁻¹/g, '^-1').replace(/²/g, '^2').replace(/³/g, '^3').replace(/⁴/g, '^4');
+    t = t.replace(/[·×⋅∙]/g, '*').replace(/[−–—]/g, '-').replace(/÷/g, '/').replace(/√/g, 'sqrt').replace(/wortel/gi, 'sqrt');
+    t = t.toLowerCase().replace(/,/g, '.');
+    t = t.replace(/[$\s_{}*\\()\[\]]/g, '');
+    return t;
+  }
+  function formulaVariants(f){
+    var n = normFormula(f);
+    var out = [n];
+    var parts = n.split('=');
+    if(parts.length === 2) out.push(parts[1] + '=' + parts[0]);
+    return out;
+  }
+  function gradeFormula(input, q){
+    var ni = normFormula(input);
+    if(!ni) return false;
+    return q.answers.some(function(a){ return formulaVariants(a).indexOf(ni) !== -1; });
+  }
+  function stripDiacritics(t){ return t.normalize ? t.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : t; }
+  function normTerm(t){ return stripDiacritics((t || '').toLowerCase()).replace(/\([^)]*\)/g, ' ').replace(/[^a-z0-9]+/g, ''); }
+  function normTermFull(t){ return stripDiacritics((t || '').toLowerCase()).replace(/[^a-z0-9]+/g, ''); }
+  function levenshtein(a, b){
+    var prev = [], cur = [], i, j;
+    for(j=0;j<=b.length;j++) prev[j] = j;
+    for(i=1;i<=a.length;i++){
+      cur = [i];
+      for(j=1;j<=b.length;j++){
+        cur[j] = Math.min(prev[j] + 1, cur[j-1] + 1, prev[j-1] + (a.charAt(i-1) === b.charAt(j-1) ? 0 : 1));
+      }
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+  function gradeTerm(input, q){
+    var ni = normTermFull(input), nb = normTerm(input);
+    if(!ni) return false;
+    return q.answers.some(function(a){
+      return [normTerm(a), normTermFull(a)].some(function(c){
+        if(!c) return false;
+        if(c === ni || c === nb) return true;
+        var tol = c.length < 5 ? 0 : (c.length < 10 ? 1 : 2);
+        return tol > 0 && ni.length >= 3 && levenshtein(ni, c) <= tol;
+      });
+    });
+  }
+  function termAlternatives(term){
+    var out = [term];
+    term.split(/\s*\/\s*|\s+of\s+/i).forEach(function(part){
+      part = part.trim();
+      if(part && out.indexOf(part) === -1) out.push(part);
+    });
+    return out;
+  }
+  function cleanContext(str){
+    var t = (str || '').replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
+    t = t.replace(/^[-–]\s*/, '').replace(/[:：]\s*$/, '').trim();
+    t = t.replace(/^\((.*)\)$/, '$1').trim();
+    if(t.length > 70) t = t.slice(0, 67).trim() + '…';
+    return t;
+  }
+  var FORMULA_WORDS = /\b(sin|cos|tan|sqrt|log|ln|abs|wortel|delta|lambda|alpha|beta|gamma|rho|theta|mu|sigma|omega|tau|phi|eta|pi)\b/gi;
+  function formulaProbe(s){
+    return s.replace(/[A-Za-z]+(?:_[A-Za-z0-9,]+)+/g, '').replace(FORMULA_WORDS, '');
+  }
+  function stripExplain(str){
+    var t = (str || '').trim(), prev;
+    do {
+      prev = t;
+      t = t.replace(/\s*\[[^\]]*\]\s*\.?$/, '');
+      t = t.replace(/\s*\(([^()]*)\)/g, function(m, inner){
+        var probe = formulaProbe(inner);
+        return (/[a-zà-ÿ]{4,}/.test(probe) && /\s/.test(inner.trim())) ? '' : m;
+      });
+    } while(t !== prev);
+    return t.replace(/[.\s]+$/, '').trim();
+  }
+  function looksLikeFormula(f){
+    if(!f || f.length < 3 || f.length > 90) return false;
+    var eq = (f.match(/=/g) || []).length;
+    if(eq < 1 || eq > 2) return false;
+    var words = formulaProbe(f).match(/\b[A-Za-zà-ÿ]{3,}\b/g) || [];
+    return words.length === 0;
+  }
+  function extractFormulaAnswers(def){
+    var t = stripExplain((def || '').replace(/\*\*/g, ''));
+    // "(...)_raaklijn" e.a.: een annotatie die als (onjuist) subscript aan een hele
+    // haakjesgroep hangt i.p.v. aan één variabele — dat is geen bruikbaar subscript.
+    t = t.replace(/\)_[a-zà-ÿ]{4,}\b/gi, ')');
+    if(!looksLikeFormula(t) && t.indexOf(':') !== -1){
+      var after = t.slice(t.lastIndexOf(':') + 1).trim().replace(/^\$/, '').replace(/\$$/, '');
+      after = stripExplain(after);
+      if(looksLikeFormula(after)) t = after;
+    }
+    var alts = t.split(/\s+of(?: omgeschreven:?)?\s+|;\s*/i).map(function(x){
+      return stripExplain(x.replace(/^omgeschreven:?\s*/i, '').replace(/^\$/, '').replace(/\$$/, ''));
+    }).filter(looksLikeFormula);
+    if(!alts.length) return null;
+    var display = /\\/.test(t) ? '$' + t.replace(/^\$/, '').replace(/\$$/, '') + '$' : t;
+    return { display: display, answers: alts };
+  }
+  function extractFormulasFromParagraph(para){
+    var out = [];
+    (para.sections || []).forEach(function(sec){
+      var heading = '';
+      var parents = {};
+      (sec.content || '').split('\n').forEach(function(raw){
+        var line = raw.replace(/\s+$/, '');
+        if(!line.trim()) return;
+        var indent = line.match(/^\s*/)[0].length;
+        var trimmed = line.trim();
+        if(trimmed.charAt(0) !== '-'){
+          var h = trimmed.replace(/\*\*/g, '');
+          var hc = findColonOutsideMath(h);
+          heading = cleanContext(hc > -1 ? h.slice(0, hc) : h);
+          parents = {};
+          return;
+        }
+        var body = trimmed.slice(1).trim().replace(/\*\*/g, '');
+        var ci = findColonOutsideMath(body);
+        if(ci === -1) return;
+        var term = body.slice(0, ci).trim();
+        var def = body.slice(ci + 1).trim();
+        var isFormulaTerm = /^formules?\b/i.test(term);
+        var ctx = '';
+        if(isFormulaTerm){
+          ctx = cleanContext(term.replace(/^formules?\s*(voor|van)?\s*/i, ''));
+          if(!ctx){
+            var best = -1;
+            Object.keys(parents).forEach(function(k){ var n = +k; if(n < indent && n > best) best = n; });
+            ctx = best > -1 ? parents[best] : heading;
+          }
+        } else {
+          ctx = cleanContext(term);
+          Object.keys(parents).forEach(function(k){ if(+k >= indent) delete parents[k]; });
+          if(term) parents[indent] = ctx;
+        }
+        var fa = extractFormulaAnswers(def);
+        if(!fa) return;
+        if(!ctx) ctx = para.title;
+        out.push({ context: ctx, display: fa.display, answers: fa.answers });
+      });
+    });
+    (para.children || []).forEach(function(child){ out = out.concat(extractFormulasFromParagraph(child)); });
+    return out;
+  }
+  function dedupeFormulas(list){
+    var seen = {};
+    return list.filter(function(f){
+      var key = normFormula(f.answers[0]);
+      if(seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+  }
+  function formulasFromParas(paras){
+    var out = [];
+    (paras || []).forEach(function(pp){ out = out.concat(extractFormulasFromParagraph(pp)); });
+    return dedupeFormulas(out);
+  }
+  function formulasFromSubject(subj){
+    var out = [];
+    (subj.chapters || []).forEach(function(c){ out = out.concat(formulasFromParas(c.paragraphs)); });
+    return dedupeFormulas(out);
+  }
+  function buildTypedQuestions(begrippen, formulas, count, mode){
+    var nForm = mode === 'formulas' ? Math.min(formulas.length, count) : Math.min(formulas.length, Math.ceil(count * 0.4));
+    var terms = mode === 'formulas' ? [] : begrippen.filter(function(b){ return !b.genericTerm && b.term.length <= 45; });
+    var nTerm = Math.min(terms.length, count - nForm);
+    if(nForm + nTerm < count && mode !== 'formulas') nForm = Math.min(formulas.length, count - nTerm);
+    var items = [];
+    shuffleArr(formulas).slice(0, nForm).forEach(function(f){
+      items.push({ type: 'type', kind: 'formula', label: 'Schrijf de formule op voor:', prompt: f.context, answers: f.answers, display: f.display });
+    });
+    shuffleArr(terms).slice(0, nTerm).forEach(function(b){
+      items.push({ type: 'type', kind: 'term', label: 'Welk begrip hoort hierbij? Typ het.', prompt: b.def, answers: termAlternatives(b.term), display: b.term });
+    });
+    return shuffleArr(items);
+  }
+
+  function openOefentoets(subj, chap, para){
+    var scopeOptions = [];
+    if(para) scopeOptions.push({ key: 'para', label: 'Deze paragraaf' });
+    if(chap) scopeOptions.push({ key: 'chap', label: 'Dit hoofdstuk' });
+    scopeOptions.push({ key: 'subj', label: 'Heel vak' });
+    var scope = scopeOptions[0].key;
+    var mode = 'mc';
+    var modeOptions = [
+      { key: 'mc', label: 'Meerkeuze' },
+      { key: 'type', label: 'Typen' },
+      { key: 'formulas', label: 'Formules typen' },
+      { key: 'mixed', label: 'Gemengd' }
+    ];
+    var allBegrippen = dedupeBegrippen(extractBegrippenFromSubject(subj));
+
+    function poolForScope(sc){
+      if(sc === 'para' && para) return dedupeBegrippen(extractBegrippenFromParagraph(para));
+      if(sc === 'chap' && chap) return dedupeBegrippen(extractBegrippenFromChapter(chap));
+      return allBegrippen;
+    }
+    function formulasForScope(sc){
+      if(sc === 'para' && para) return dedupeFormulas(extractFormulasFromParagraph(para));
+      if(sc === 'chap' && chap) return formulasFromParas(chap.paragraphs);
+      return formulasFromSubject(subj);
+    }
+
+    var body = document.createElement('div');
+    body.className = 'quiz-setup';
+
+    function makeToggleRow(options, getCurrent, onPick){
+      var row = document.createElement('div');
+      row.className = 'toggle-row';
+      row.style.flexWrap = 'wrap';
+      var btns = {};
+      options.forEach(function(opt){
+        var b = document.createElement('button');
+        b.className = 'toggle-option' + (opt.key === getCurrent() ? ' active' : '');
+        b.textContent = opt.label;
+        b.addEventListener('click', function(){
+          onPick(opt.key);
+          Object.keys(btns).forEach(function(k){ btns[k].classList.toggle('active', k === getCurrent()); });
+          updateInfo();
+        });
+        btns[opt.key] = b;
+        row.appendChild(b);
+      });
+      return row;
+    }
+
+    body.appendChild(makeToggleRow(scopeOptions, function(){ return scope; }, function(k){ scope = k; }));
+    var modeLabel = document.createElement('div');
+    modeLabel.className = 'quiz-mode-label';
+    modeLabel.textContent = 'Vraagtype';
+    body.appendChild(modeLabel);
+    body.appendChild(makeToggleRow(modeOptions, function(){ return mode; }, function(k){ mode = k; }));
+
+    var info = document.createElement('p');
+    info.className = 'quiz-setup-info';
+    body.appendChild(info);
+
+    var countRow = document.createElement('div');
+    countRow.className = 'quiz-count-row';
+    var countLabel = document.createElement('label');
+    countLabel.textContent = 'Aantal vragen';
+    var countInput = document.createElement('input');
+    countInput.type = 'number';
+    countInput.min = '1';
+    countInput.className = 'grade-input';
+    countRow.appendChild(countLabel);
+    countRow.appendChild(countInput);
+    body.appendChild(countRow);
+
+    var actions = document.createElement('div');
+    actions.className = 'modal-actions';
+    actions.style.marginTop = '16px';
+    var startBtn = document.createElement('button');
+    startBtn.className = 'btn primary';
+    startBtn.textContent = 'Start oefentoets';
+    startBtn.addEventListener('click', function(){
+      var pool = poolForScope(scope);
+      var forms = formulasForScope(scope);
+      var count = Math.max(1, parseInt(countInput.value, 10) || 10);
+      var questions;
+      if(mode === 'mc') questions = buildQuizQuestions(pool, allBegrippen, count);
+      else if(mode === 'type') questions = buildTypedQuestions(pool, forms, count, 'type');
+      else if(mode === 'formulas') questions = buildTypedQuestions([], forms, count, 'formulas');
+      else {
+        var nMc = Math.ceil(count / 2);
+        questions = shuffleArr(buildQuizQuestions(pool, allBegrippen, nMc).concat(buildTypedQuestions(pool, forms, count - nMc, 'type')));
+      }
+      if(!questions.length){
+        info.textContent = 'Kon geen vragen genereren voor deze keuze — probeer een groter bereik of ander vraagtype.';
+        return;
+      }
+      overlay.close();
+      startQuizRun(subj, chap, para, questions);
+    });
+    actions.appendChild(startBtn);
+    body.appendChild(actions);
+
+    function updateInfo(){
+      var pool = poolForScope(scope);
+      var forms = formulasForScope(scope);
+      var n = pool.length, f = forms.length;
+      var ok = true, msg = '', avail = 0, max = 0;
+      var counts = n + ' leerpunt' + (n === 1 ? '' : 'en') + ' en ' + f + ' formule' + (f === 1 ? '' : 's') + ' gevonden in dit bereik.';
+      if(mode === 'mc'){
+        avail = n; max = n * 2;
+        if(n === 0){ ok = false; msg = 'Geen leerstof gevonden om vragen van te maken in dit bereik.'; }
+        else if(allBegrippen.length < 2){ ok = false; msg = 'Er is minstens nog 1 ander feit in het vak nodig om meerkeuze-opties te maken.'; }
+      } else if(mode === 'formulas'){
+        avail = f; max = f;
+        if(f === 0){ ok = false; msg = 'Geen formules gevonden in dit bereik. Ik herken ze aan regels zoals "Formule: v = s / t".'; }
+      } else if(mode === 'type'){
+        avail = n + f; max = avail;
+        if(avail === 0){ ok = false; msg = 'Geen leerstof of formules gevonden in dit bereik.'; }
+      } else {
+        avail = n + f; max = avail * 2;
+        if(n === 0 && f === 0){ ok = false; msg = 'Geen leerstof of formules gevonden in dit bereik.'; }
+        else if(allBegrippen.length < 2){ ok = false; msg = 'Er is minstens nog 1 ander feit in het vak nodig om meerkeuze-opties te maken.'; }
+      }
+      info.textContent = ok ? counts : msg;
+      countInput.disabled = !ok;
+      startBtn.disabled = !ok;
+      if(ok){
+        countInput.value = String(avail < 3 ? avail : Math.min(avail, 12));
+        countInput.max = String(max);
+      }
+    }
+    updateInfo();
+
+    var overlay = openOverlay({ title: 'Oefentoets', bodyEl: body, width: '440px' });
+  }
+
+  function startQuizRun(subj, chap, para, questions){
+    var idx = 0, score = 0;
+    var body = document.createElement('div');
+    body.className = 'quiz-run';
+    var overlay = openOverlay({ title: 'Oefentoets', bodyEl: body, width: '500px' });
+
+    var SPECIAL_CHARS = ['Δ', 'ρ', 'π', 'λ', 'η', 'σ', 'α', 'β', '·', '²', '³', '√', '⁻¹'];
+
+    function renderQuestion(){
+      body.innerHTML = '';
+      var q = questions[idx];
+      var progress = document.createElement('div');
+      progress.className = 'quiz-progress';
+      var progLeft = document.createElement('span');
+      progLeft.textContent = 'Vraag ' + (idx + 1) + ' / ' + questions.length;
+      var progRight = document.createElement('span');
+      progRight.textContent = 'Score: ' + score;
+      progress.appendChild(progLeft);
+      progress.appendChild(progRight);
+      body.appendChild(progress);
+
+      var promptEl = document.createElement('div');
+      promptEl.className = 'quiz-prompt';
+      var label = document.createElement('div');
+      label.className = 'quiz-prompt-label';
+      label.textContent = q.type === 'type' ? q.label : (q.askTerm ? 'Wat hoort hierbij?' : 'Waar hoort deze omschrijving bij?');
+      promptEl.appendChild(label);
+      var promptText = document.createElement('div');
+      promptText.className = 'quiz-prompt-text';
+      promptText.innerHTML = renderInline(q.prompt);
+      promptEl.appendChild(promptText);
+      body.appendChild(promptEl);
+      typesetMath(promptEl);
+
+      var nextBtn = document.createElement('button');
+      nextBtn.className = 'btn primary quiz-next-btn';
+      nextBtn.style.display = 'none';
+      nextBtn.textContent = (idx === questions.length - 1) ? 'Bekijk resultaat' : 'Volgende vraag';
+      nextBtn.addEventListener('click', function(){
+        idx++;
+        if(idx >= questions.length) renderResult();
+        else renderQuestion();
+      });
+
+      if(q.type === 'type'){
+        var typeWrap = document.createElement('div');
+        typeWrap.className = 'quiz-type-wrap';
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'quiz-type-input';
+        input.placeholder = q.kind === 'formula' ? 'Typ de formule, bijv. v = s / t' : 'Typ het begrip';
+        input.setAttribute('autocomplete', 'off');
+        input.setAttribute('autocapitalize', 'none');
+        input.spellcheck = false;
+        typeWrap.appendChild(input);
+        if(q.kind === 'formula'){
+          var specials = document.createElement('div');
+          specials.className = 'quiz-special-row';
+          SPECIAL_CHARS.forEach(function(ch){
+            var sb = document.createElement('button');
+            sb.type = 'button';
+            sb.className = 'quiz-special-btn';
+            sb.textContent = ch;
+            sb.addEventListener('mousedown', function(e){ e.preventDefault(); });
+            sb.addEventListener('click', function(){
+              if(input.disabled) return;
+              var st = input.selectionStart, en = input.selectionEnd;
+              if(st == null){ input.value += ch; }
+              else {
+                input.value = input.value.slice(0, st) + ch + input.value.slice(en);
+                input.selectionStart = input.selectionEnd = st + ch.length;
+              }
+              input.focus();
+            });
+            specials.appendChild(sb);
+          });
+          typeWrap.appendChild(specials);
+        }
+        body.appendChild(typeWrap);
+
+        var checkBtn = document.createElement('button');
+        checkBtn.className = 'btn primary quiz-next-btn';
+        checkBtn.textContent = 'Controleer';
+        body.appendChild(checkBtn);
+        var feedback = document.createElement('div');
+        feedback.style.display = 'none';
+        body.appendChild(feedback);
+        body.appendChild(nextBtn);
+
+        var answered = false;
+        var submit = function(){
+          if(answered) return;
+          var val = input.value.trim();
+          if(!val){ input.focus(); return; }
+          answered = true;
+          var ok = q.kind === 'formula' ? gradeFormula(val, q) : gradeTerm(val, q);
+          if(ok) score++;
+          progRight.textContent = 'Score: ' + score;
+          input.disabled = true;
+          checkBtn.style.display = 'none';
+          feedback.style.display = '';
+          feedback.className = 'quiz-feedback ' + (ok ? 'ok' : 'bad');
+          feedback.innerHTML = '';
+          var head = document.createElement('div');
+          head.className = 'quiz-feedback-head';
+          head.textContent = ok ? 'Goed!' : 'Niet helemaal.';
+          feedback.appendChild(head);
+          if(!ok || q.kind === 'formula'){
+            var reveal = document.createElement('div');
+            var revLabel = document.createElement('span');
+            revLabel.className = 'quiz-answer-label';
+            revLabel.textContent = 'Juiste antwoord: ';
+            var revText = document.createElement('span');
+            revText.innerHTML = renderInline(q.display);
+            reveal.appendChild(revLabel);
+            reveal.appendChild(revText);
+            feedback.appendChild(reveal);
+            typesetMath(reveal);
+          }
+          if(!ok){
+            var overrideBtn = document.createElement('button');
+            overrideBtn.type = 'button';
+            overrideBtn.className = 'btn quiz-override-btn';
+            overrideBtn.textContent = 'Toch goed rekenen';
+            overrideBtn.addEventListener('click', function(){
+              score++;
+              progRight.textContent = 'Score: ' + score;
+              feedback.className = 'quiz-feedback ok';
+              head.textContent = 'Goed gerekend (zelf beoordeeld).';
+              overrideBtn.parentNode.removeChild(overrideBtn);
+            });
+            feedback.appendChild(overrideBtn);
+          }
+          nextBtn.style.display = '';
+          nextBtn.focus();
+        };
+        checkBtn.addEventListener('click', submit);
+        input.addEventListener('keydown', function(e){
+          if(e.key === 'Enter'){ e.preventDefault(); submit(); }
+        });
+        setTimeout(function(){ input.focus(); }, 0);
+      } else {
+        var optsWrap = document.createElement('div');
+        optsWrap.className = 'quiz-options';
+        q.options.forEach(function(opt){
+          var optBtn = document.createElement('button');
+          optBtn.className = 'quiz-option';
+          optBtn.innerHTML = renderInline(opt);
+          optBtn.addEventListener('click', function(){
+            var correctIdx = q.options.indexOf(q.correct);
+            Array.prototype.forEach.call(optsWrap.children, function(b, i){
+              b.disabled = true;
+              if(i === correctIdx) b.classList.add('correct');
+            });
+            if(opt !== q.correct) optBtn.classList.add('incorrect');
+            else score++;
+            progRight.textContent = 'Score: ' + score;
+            nextBtn.style.display = '';
+          });
+          optsWrap.appendChild(optBtn);
+          typesetMath(optBtn);
+        });
+        body.appendChild(optsWrap);
+        body.appendChild(nextBtn);
+      }
+    }
+
+    function renderResult(){
+      body.innerHTML = '';
+      var pct = Math.round((score / questions.length) * 100);
+      var res = document.createElement('div');
+      res.className = 'quiz-result';
+      var big = document.createElement('div');
+      big.className = 'quiz-result-score';
+      big.textContent = score + ' / ' + questions.length;
+      res.appendChild(big);
+      var pctEl = document.createElement('div');
+      pctEl.className = 'quiz-result-pct';
+      pctEl.textContent = pct + '%';
+      res.appendChild(pctEl);
+      var msg = document.createElement('p');
+      msg.className = 'quiz-result-msg';
+      msg.textContent = pct === 100 ? 'Perfect! Alles goed.' : pct >= 80 ? 'Sterk gedaan!' : pct >= 50 ? 'Goede basis, blijf herhalen.' : 'Nog even doorzetten — herhaling helpt.';
+      res.appendChild(msg);
+      body.appendChild(res);
+
+      var actions = document.createElement('div');
+      actions.className = 'modal-actions';
+      var againBtn = document.createElement('button');
+      againBtn.className = 'btn';
+      againBtn.textContent = 'Opnieuw instellen';
+      againBtn.addEventListener('click', function(){
+        overlay.close();
+        openOefentoets(subj, chap, para);
+      });
+      var closeBtn = document.createElement('button');
+      closeBtn.className = 'btn primary';
+      closeBtn.textContent = 'Sluiten';
+      closeBtn.addEventListener('click', function(){ overlay.close(); });
+      actions.appendChild(againBtn);
+      actions.appendChild(closeBtn);
+      body.appendChild(actions);
+    }
+
+    renderQuestion();
   }
 
   function renderContent(text){
@@ -2925,7 +3715,14 @@
       }
       var para = state.selected.paragraphId ? getParagraph(subj.id, chap.id, state.selected.paragraphId) : null;
       if(!para){
-        contentEl.innerHTML = '<div class="empty-state"><h2>' + escapeHtml(chap.title) + '</h2><p>Kies links een paragraaf, of voeg er een toe met "＋ Paragraaf toevoegen".</p></div>';
+        var chapEmpty = document.createElement('div');
+        chapEmpty.className = 'empty-state';
+        chapEmpty.innerHTML = '<h2>' + escapeHtml(chap.title) + '</h2><p>Kies links een paragraaf, of voeg er een toe met "＋ Paragraaf toevoegen".</p>';
+        var chapQuizBtn = iconBtn('quiz', 'Oefentoets over dit hoofdstuk', 'oefentoets-btn');
+        chapQuizBtn.style.marginTop = '10px';
+        chapQuizBtn.addEventListener('click', function(){ openOefentoets(subj, chap, null); });
+        chapEmpty.appendChild(chapQuizBtn);
+        contentEl.appendChild(chapEmpty);
         return;
       }
 
@@ -2935,6 +3732,9 @@
       h1.className = 'paragraph-title';
       h1.textContent = para.title;
       titleRow.appendChild(h1);
+      var quizBtn = iconBtn('quiz', 'Oefentoets', 'oefentoets-btn');
+      quizBtn.addEventListener('click', function(){ openOefentoets(subj, chap, para); });
+      titleRow.appendChild(quizBtn);
       contentEl.appendChild(titleRow);
 
       contentEl.appendChild(renderSectionsBlock(subj, chap, para));
@@ -3760,6 +4560,15 @@
       dayDate.textContent = formatShortDate(dayDates[i]);
       th.appendChild(dayName);
       th.appendChild(dayDate);
+      var dayTests = testsOnDate(isoDate(dayDates[i]));
+      if(dayTests.length){
+        th.classList.add('has-test');
+        var tm = document.createElement('div');
+        tm.className = 'th-test';
+        tm.textContent = 'Toets';
+        tm.title = dayTests.map(function(t){ return (plannerSubjectLabel(t.subjectId) || 'Toets') + (t.title ? ': ' + t.title : ''); }).join('\n');
+        th.appendChild(tm);
+      }
       trh.appendChild(th);
     });
     thead.appendChild(trh);
@@ -3779,6 +4588,8 @@
         var cellData = getCellData(week, subj.id, d.key);
         if(cellData.important) td.classList.add('cell-important');
         if(cellData.done) td.classList.add('cell-done');
+        var cellDayISO = isoDate(dayDates[i]);
+        if(ensureTests().some(function(t){ return t.date === cellDayISO && t.subjectId === subj.id; })) td.classList.add('cell-test');
 
         var cellWrap = document.createElement('div');
         cellWrap.className = 'cell-wrap';
@@ -3843,6 +4654,190 @@
     return card;
   }
 
+  // ---------- Toetsdatums ----------
+  function ensureTests(){
+    if(!state.planner) return [];
+    if(!Array.isArray(state.planner.tests)) state.planner.tests = [];
+    return state.planner.tests;
+  }
+  function daysUntil(iso){
+    var t = dateFromISO(iso), n = new Date();
+    var a = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+    return Math.round((t - a) / 86400000);
+  }
+  function countdownLabel(iso){
+    var d = daysUntil(iso);
+    if(d < 0) return d === -1 ? 'gisteren' : (-d) + ' dagen geleden';
+    if(d === 0) return 'vandaag';
+    if(d === 1) return 'morgen';
+    if(d < 14) return 'over ' + d + ' dagen';
+    return 'over ' + Math.round(d / 7) + ' weken';
+  }
+  function plannerSubjectLabel(id){
+    var ps = state.planner.subjects.find(function(x){ return x.id === id; });
+    return ps ? ps.label : '';
+  }
+  function testsOnDate(iso){
+    return ensureTests().filter(function(t){ return t.date === iso; });
+  }
+  function shortDateWithDay(iso){
+    var d = dateFromISO(iso);
+    return DAY_KEY_BY_JS_DAY[d.getDay()] + ' ' + formatShortDate(d);
+  }
+  function testRow(t, onClick){
+    var d = daysUntil(t.date);
+    var row = document.createElement('div');
+    row.className = 'home-today-item test-row' + (d >= 0 && d <= 2 ? ' home-important' : '');
+    if(d < 0) row.style.opacity = '0.6';
+    row.title = 'Klik om te bewerken';
+    var when = document.createElement('span');
+    when.className = 'home-today-vak';
+    when.textContent = shortDateWithDay(t.date);
+    var txt = document.createElement('span');
+    txt.className = 'home-today-text';
+    var vak = plannerSubjectLabel(t.subjectId);
+    txt.textContent = (vak || 'Toets') + (t.title ? ' — ' + t.title : '');
+    var count = document.createElement('span');
+    count.className = 'test-count';
+    count.textContent = countdownLabel(t.date);
+    row.appendChild(when);
+    row.appendChild(txt);
+    row.appendChild(count);
+    row.addEventListener('click', onClick);
+    return row;
+  }
+  function openTestEditor(test){
+    var isNew = !test;
+    var draft = test ? Object.assign({}, test) : { id: uid('test'), date: isoDate(new Date()), subjectId: (state.planner.subjects[0] || {}).id || '', title: '' };
+    var body = document.createElement('div');
+
+    var vakField = document.createElement('label');
+    vakField.className = 'test-editor-field';
+    var vakLbl = document.createElement('span');
+    vakLbl.textContent = 'Vak';
+    var vakSel = document.createElement('select');
+    state.planner.subjects.forEach(function(ps){
+      var o = document.createElement('option');
+      o.value = ps.id;
+      o.textContent = ps.label;
+      if(ps.id === draft.subjectId) o.selected = true;
+      vakSel.appendChild(o);
+    });
+    vakSel.addEventListener('change', function(){ draft.subjectId = vakSel.value; });
+    vakField.appendChild(vakLbl);
+    vakField.appendChild(vakSel);
+    body.appendChild(vakField);
+
+    var titleField = document.createElement('label');
+    titleField.className = 'test-editor-field';
+    var titleLbl = document.createElement('span');
+    titleLbl.textContent = 'Omschrijving (optioneel)';
+    var titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.placeholder = 'Bijv. Hoofdstuk 3 SO';
+    titleInput.value = draft.title || '';
+    titleInput.addEventListener('input', function(){ draft.title = titleInput.value; });
+    titleField.appendChild(titleLbl);
+    titleField.appendChild(titleInput);
+    body.appendChild(titleField);
+
+    var dateField = document.createElement('div');
+    dateField.className = 'test-editor-field';
+    var dateLbl = document.createElement('span');
+    dateLbl.textContent = 'Datum (dag, maand, jaar)';
+    dateField.appendChild(dateLbl);
+    dateField.appendChild(createDateDropdowns(draft.date, function(iso){ draft.date = iso; }));
+    body.appendChild(dateField);
+
+    var actions = document.createElement('div');
+    actions.className = 'modal-actions';
+    actions.style.marginTop = '14px';
+    var overlay;
+    if(!isNew){
+      var delBtn = document.createElement('button');
+      delBtn.className = 'btn';
+      delBtn.style.marginRight = 'auto';
+      delBtn.style.color = 'var(--danger)';
+      delBtn.textContent = 'Verwijderen';
+      delBtn.addEventListener('click', function(){
+        state.planner.tests = ensureTests().filter(function(x){ return x.id !== test.id; });
+        save();
+        overlay.close();
+        renderAll();
+      });
+      actions.appendChild(delBtn);
+    }
+    var cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn';
+    cancelBtn.textContent = 'Annuleren';
+    cancelBtn.addEventListener('click', function(){ overlay.close(); });
+    var saveBtn = document.createElement('button');
+    saveBtn.className = 'btn primary';
+    saveBtn.textContent = 'Opslaan';
+    saveBtn.addEventListener('click', function(){
+      if(!draft.date){ toast('Kies eerst een datum'); return; }
+      draft.title = (draft.title || '').trim();
+      var list = ensureTests();
+      if(isNew) list.push(draft);
+      else {
+        var i = list.findIndex(function(x){ return x.id === test.id; });
+        if(i > -1) list[i] = draft;
+      }
+      save();
+      overlay.close();
+      renderAll();
+    });
+    actions.appendChild(cancelBtn);
+    actions.appendChild(saveBtn);
+    body.appendChild(actions);
+    overlay = openOverlay({ title: isNew ? 'Toets toevoegen' : 'Toets bewerken', bodyEl: body, width: '380px' });
+  }
+  function renderTestsCard(){
+    var tests = ensureTests().slice().sort(function(a, b){ return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
+    var upcoming = tests.filter(function(t){ return daysUntil(t.date) >= 0; });
+    var past = tests.filter(function(t){ return daysUntil(t.date) < 0; }).reverse();
+
+    var card = document.createElement('div');
+    card.className = 'section-card';
+    var head = document.createElement('div');
+    head.className = 'section-head';
+    var label = document.createElement('span');
+    label.className = 'section-label';
+    label.textContent = 'Toetsen';
+    head.appendChild(label);
+    var addBtn = document.createElement('button');
+    addBtn.className = 'chip chip-add';
+    addBtn.textContent = '＋ Toets';
+    addBtn.addEventListener('click', function(){ openTestEditor(null); });
+    head.appendChild(addBtn);
+    card.appendChild(head);
+
+    var body = document.createElement('div');
+    body.className = 'section-body';
+    if(!upcoming.length){
+      var empty = document.createElement('p');
+      empty.className = 'empty';
+      empty.textContent = 'Geen toetsen gepland.';
+      body.appendChild(empty);
+    }
+    upcoming.forEach(function(t){ body.appendChild(testRow(t, function(){ openTestEditor(t); })); });
+    if(past.length){
+      var toggle = document.createElement('button');
+      toggle.className = 'tests-toggle';
+      toggle.textContent = (state.showPastTests ? 'Verberg' : 'Toon') + ' eerdere toetsen (' + past.length + ')';
+      toggle.addEventListener('click', function(){ state.showPastTests = !state.showPastTests; renderPlannerPanel(); });
+      body.appendChild(toggle);
+      if(state.showPastTests){
+        var pastWrap = document.createElement('div');
+        pastWrap.style.marginTop = '8px';
+        past.forEach(function(t){ pastWrap.appendChild(testRow(t, function(){ openTestEditor(t); })); });
+        body.appendChild(pastWrap);
+      }
+    }
+    card.appendChild(body);
+    return card;
+  }
+
   function renderPlannerPanel(){
     contentEl.innerHTML = '';
     var titleRow = document.createElement('div');
@@ -3868,6 +4863,7 @@
 
     contentEl.appendChild(renderRulesCard());
     contentEl.appendChild(renderSubjectsManager());
+    contentEl.appendChild(renderTestsCard());
 
     var currentStart = currentPlannerWeekStart();
     var week = getOrCreateWeek(currentStart);
@@ -3947,6 +4943,24 @@
     }
     card.appendChild(body);
     contentEl.appendChild(card);
+
+    var soonTests = ensureTests().filter(function(t){ return daysUntil(t.date) >= 0; }).sort(function(a, b){ return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); }).slice(0, 5);
+    if(soonTests.length){
+      var tCard = document.createElement('div');
+      tCard.className = 'section-card';
+      var tHead = document.createElement('div');
+      tHead.className = 'section-head';
+      var tLabel = document.createElement('span');
+      tLabel.className = 'section-label';
+      tLabel.textContent = 'Aankomende toetsen';
+      tHead.appendChild(tLabel);
+      tCard.appendChild(tHead);
+      var tBody = document.createElement('div');
+      tBody.className = 'section-body';
+      soonTests.forEach(function(t){ tBody.appendChild(testRow(t, function(){ goToPlanner(); })); });
+      tCard.appendChild(tBody);
+      contentEl.appendChild(tCard);
+    }
 
     var grid = document.createElement('div');
     grid.className = 'home-vak-grid';
@@ -4249,13 +5263,14 @@
   }
 
   // ---------- Export / Import ----------
-  function exportData(){
-    var blob = new Blob([JSON.stringify({ subjects: state.subjects, planner: state.planner }, null, 2)], { type: 'application/json' });
+  function exportData(prefix){
+    if(typeof prefix !== 'string') prefix = '';
+    var blob = new Blob([JSON.stringify({ subjects: state.subjects, planner: state.planner, grades: state.grades }, null, 2)], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    var date = new Date().toISOString().slice(0,10);
-    a.download = 'studeerhub-backup-' + date + '.json';
+    var date = isoDate(new Date());
+    a.download = (prefix || 'studeerhub-backup') + '-' + date + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -4268,11 +5283,84 @@
       try{
         var parsed = JSON.parse(reader.result);
         if(!parsed || !Array.isArray(parsed.subjects)) throw new Error('Ongeldig bestand');
-        var replace = confirm('Bestand geladen: ' + parsed.subjects.length + ' vak(ken) gevonden.\n\nKlik OK om dit toe te voegen aan je huidige vakken, of Annuleren om te stoppen.');
-        if(!replace) return;
+        askImportMode(parsed, function(mode){
+          if(mode === 'replace'){ replaceAll(parsed); return; }
+          try{ addImport(parsed); }
+          catch(err){ alert('Kon dit bestand niet importeren: ' + err.message); }
+        });
+        return;
+      }catch(e){
+        alert('Kon dit bestand niet importeren: ' + e.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function askImportMode(parsed, cb){
+    var body = document.createElement('div');
+    var info = document.createElement('p');
+    info.className = 'quiz-setup-info';
+    info.style.marginTop = '0';
+    var parts = [parsed.subjects.length + ' vak(ken)'];
+    if(parsed.planner) parts.push('planner');
+    if(parsed.grades) parts.push('cijfers');
+    info.textContent = 'Bestand geladen: ' + parts.join(', ') + '. Wat wil je doen?';
+    body.appendChild(info);
+    var overlay;
+    function choice(title, desc, mode, danger){
+      var b = document.createElement('button');
+      b.className = 'btn' + (danger ? '' : ' primary');
+      b.style.cssText = 'display:block;width:100%;text-align:left;margin-bottom:10px;padding:10px 14px;';
+      if(danger){ b.style.borderColor = 'var(--danger)'; b.style.color = 'var(--danger)'; }
+      var t = document.createElement('div');
+      t.style.fontWeight = '700';
+      t.textContent = title;
+      var d = document.createElement('div');
+      d.style.cssText = 'font-size:12.5px;font-weight:400;opacity:0.85;margin-top:2px;white-space:normal;';
+      d.textContent = desc;
+      b.appendChild(t);
+      b.appendChild(d);
+      b.addEventListener('click', function(){ overlay.close(); cb(mode); });
+      return b;
+    }
+    body.appendChild(choice('Toevoegen', 'Voegt de inhoud toe aan wat je al hebt. Niets wordt overschreven.', 'add', false));
+    body.appendChild(choice('Alles vervangen', 'Vervangt vakken' + (parsed.planner ? ', planner' : '') + (parsed.grades ? ' en cijfers' : '') + ' door dit bestand. Je huidige gegevens worden eerst automatisch als backup gedownload.', 'replace', true));
+    var cancel = document.createElement('button');
+    cancel.className = 'btn';
+    cancel.textContent = 'Annuleren';
+    cancel.addEventListener('click', function(){ overlay.close(); });
+    body.appendChild(cancel);
+    overlay = openOverlay({ title: 'Importeren', bodyEl: body, width: '420px' });
+  }
+
+  function replaceAll(parsed){
+    if(!confirm('Weet je het zeker? Alles wordt vervangen door dit bestand.\n\nJe huidige gegevens worden eerst automatisch als backup gedownload.')) return;
+    exportData('studeerhub-voor-import');
+    parsed.subjects.forEach(function(sub){ normalizeSubject(sub); });
+    state.subjects = parsed.subjects;
+    if(parsed.planner){
+      state.planner = parsed.planner;
+      if(!state.planner.title) state.planner.title = 'Planner';
+      if(!Array.isArray(state.planner.subjects)) state.planner.subjects = [];
+      state.planner.weeks = (state.planner.weeks || []).map(normalizeWeek);
+      ensureTests();
+    }
+    if(parsed.grades) state.grades = parsed.grades;
+    state.selected = { subjectId: null, chapterId: null, paragraphId: null, itemId: null };
+    state.expanded = {};
+    state.view = 'home';
+    healState();
+    save();
+    renderAll();
+    toast('Alles vervangen door de backup');
+  }
+
+  function addImport(parsed){
+    {
         parsed.subjects.forEach(function(s){
           normalizeSubject(s);
           // avoid id collisions
+          s._oldId = s.id;
           s.id = uid('subj');
           (s.chapters||[]).forEach(function(c){
             c.id = uid('chap');
@@ -4294,6 +5382,7 @@
         });
         // Vakken met dezelfde naam samenvoegen met een bestaand vak, in plaats van als
         // los dubbel vak toe te voegen.
+        var oldSubjToNew = {};
         parsed.subjects.forEach(function(s){
           var existing = state.subjects.find(function(x){ return x.name.toLowerCase() === s.name.toLowerCase(); });
           if(existing){
@@ -4301,10 +5390,30 @@
             existing.books = (existing.books || []).concat(s.books || []);
             existing.notes = (existing.notes || []).concat(s.notes || []);
             existing.portfolioItems = (existing.portfolioItems || []).concat(s.portfolioItems || []);
+            if(s._oldId) oldSubjToNew[s._oldId] = existing.id;
           } else {
             state.subjects.push(s);
+            if(s._oldId) oldSubjToNew[s._oldId] = s.id;
           }
+          delete s._oldId;
         });
+
+        // Cijfers uit de backup toevoegen (zonder dubbelen)
+        if(parsed.grades){
+          Object.keys(parsed.grades).forEach(function(oldId){
+            var targetId = oldSubjToNew[oldId];
+            var srcItems = parsed.grades[oldId] && parsed.grades[oldId].items;
+            if(!targetId || !Array.isArray(srcItems)) return;
+            var g = getGradesFor(targetId);
+            srcItems.forEach(function(it){
+              var sig = function(x){ var c = Object.assign({}, x); delete c.id; return JSON.stringify(c); };
+              if(g.items.some(function(e){ return sig(e) === sig(it); })) return;
+              var copy = Object.assign({}, it);
+              copy.id = uid('grade');
+              g.items.push(copy);
+            });
+          });
+        }
 
         if(parsed.planner){
           var oldIdToLabel = {};
@@ -4321,7 +5430,27 @@
               var match = state.planner.subjects.find(function(s){ return s.label.toLowerCase() === lbl.toLowerCase(); });
               if(match) newWeek.cells[match.id] = w.cells[oldId];
             });
-            state.planner.weeks.push(newWeek);
+            var sameWeek = state.planner.weeks.find(function(x){ return x.startDate === newWeek.startDate; });
+            if(sameWeek){
+              // Zelfde week bestaat al: alleen lege vakjes aanvullen, niets overschrijven
+              Object.keys(newWeek.cells).forEach(function(k){
+                var cur = sameWeek.cells[k];
+                var empty = cur === undefined || cur === null || cur === '' || (typeof cur === 'object' && !JSON.stringify(cur).replace(/[{}\[\]",:]/g,'').trim());
+                if(empty) sameWeek.cells[k] = newWeek.cells[k];
+              });
+              if(!sameWeek.note && newWeek.note) sameWeek.note = newWeek.note;
+            } else {
+              state.planner.weeks.push(newWeek);
+            }
+          });
+          (parsed.planner.tests || []).forEach(function(t){
+            if(!t || !t.date) return;
+            var lbl = oldIdToLabel[t.subjectId];
+            var match = lbl ? state.planner.subjects.find(function(ps){ return ps.label.toLowerCase() === lbl.toLowerCase(); }) : null;
+            var sid = match ? match.id : '';
+            var list = ensureTests();
+            if(list.some(function(x){ return x.date === t.date && x.subjectId === sid && (x.title || '') === (t.title || ''); })) return;
+            list.push({ id: uid('test'), date: t.date, subjectId: sid, title: t.title || '' });
           });
           if(!state.planner.rules && parsed.planner.rules){ state.planner.rules = parsed.planner.rules; }
         }
@@ -4329,11 +5458,7 @@
         save();
         renderAll();
         toast('Import gelukt');
-      }catch(e){
-        alert('Kon dit bestand niet importeren: ' + e.message);
-      }
-    };
-    reader.readAsText(file);
+    }
   }
 
   // ---------- Instellingen: paneel openen/sluiten ----------
@@ -4450,10 +5575,6 @@
 
   // ---------- Init ----------
   load();
-  // expand the seeded subject by default
-  if(state.subjects.length){
-    state.expanded[state.subjects[0].id] = true;
-  }
   renderAll();
   initFirebaseSync();
 
