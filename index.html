@@ -694,6 +694,18 @@
   .home-today-item.home-important{ background: var(--danger); color:#fff; }
   .home-today-item.home-done{ background: #2E9E6D; color:#fff; }
   .home-today-vak{ font-weight:700; flex-shrink:0; min-width: 90px; }
+  .home-today-check{
+    flex-shrink:0; width:20px; height:20px; border-radius:6px;
+    border:1.5px solid var(--border); background: var(--panel-bg);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+    color:#fff;
+  }
+  .home-today-check svg{ width:13px; height:13px; }
+  .home-today-check:hover{ border-color: var(--accent); }
+  .home-today-check.checked{ background: #2E9E6D; border-color: #2E9E6D; }
+  .home-important .home-today-check{ border-color: rgba(255,255,255,0.6); background: transparent; }
+  .home-important .home-today-check.checked{ background: #2E9E6D; border-color: #2E9E6D; }
+  .home-done .home-today-check{ border-color: rgba(255,255,255,0.6); }
   .home-today-text{ }
   .home-vak-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap:10px; margin-top:8px; }
   .home-vak-tile{
@@ -1825,6 +1837,40 @@
       }
     }
 
+    // Self-healing: twee planner-weken met dezelfde startdatum (bijvoorbeeld overgebleven van
+    // een eerdere import) samenvoegen tot één — anders levert de toetsen-backfill hieronder
+    // voor hetzelfde vakje twee losse, "toevallig gelijke" toetsen op omdat de weken elk hun
+    // eigen week.id hebben.
+    if(state.planner.weeks && state.planner.weeks.length){
+      var byStart = {};
+      var merged = [];
+      state.planner.weeks.forEach(function(w){
+        var existing = byStart[w.startDate];
+        if(!existing){
+          byStart[w.startDate] = w;
+          merged.push(w);
+          return;
+        }
+        Object.keys(w.cells || {}).forEach(function(subjId){
+          if(!existing.cells[subjId]) existing.cells[subjId] = {};
+          Object.keys(w.cells[subjId]).forEach(function(dayKey){
+            var cur = existing.cells[subjId][dayKey];
+            var curData = cur ? getCellData(existing, subjId, dayKey) : { text:'', done:false, important:false };
+            var incoming = getCellData(w, subjId, dayKey);
+            if(!curData.text.trim() && !curData.important && !curData.done){
+              existing.cells[subjId][dayKey] = incoming;
+            } else if(incoming.important && !curData.important){
+              // conflict: behoud bestaande tekst, maar verlies een "belangrijk"-markering niet
+              curData.important = true;
+              existing.cells[subjId][dayKey] = curData;
+            }
+          });
+        });
+        if(!existing.note && w.note) existing.note = w.note;
+      });
+      state.planner.weeks = merged;
+    }
+
     // Self-healing: vakjes die al vóór de toetsenlijst op "Belangrijk" stonden, kregen nog
     // geen gekoppelde toets — dat halen we hier eenmalig in.
     ensureTests();
@@ -1839,6 +1885,17 @@
           state.planner.tests.push({ id: uid('test'), date: isoDate(addDays(monday, i)), subjectId: subjId, title: (cellData.text || '').trim(), cellKey: key });
         });
       });
+    });
+
+    // Self-healing: toetsen die (bijvoorbeeld door een eerdere versie van deze koppeling)
+    // dubbel zijn ontstaan voor exact hetzelfde vak, dezelfde datum en dezelfde omschrijving,
+    // terugbrengen tot één.
+    var seenTests = {};
+    state.planner.tests = state.planner.tests.filter(function(t){
+      var sig = t.date + '|' + t.subjectId + '|' + (t.title || '').trim().toLowerCase();
+      if(seenTests[sig]) return false;
+      seenTests[sig] = true;
+      return true;
     });
   }
 
@@ -4832,7 +4889,7 @@
     overlay = openOverlay({ title: isNew ? 'Toets toevoegen' : 'Toets bewerken', bodyEl: body, width: '380px' });
   }
   function renderTestsCard(){
-    var tests = ensureTests().slice().sort(function(a, b){ return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
+    var tests = ensureTests().filter(function(t){ return daysUntil(t.date) <= 14; }).slice().sort(function(a, b){ return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
     var upcoming = tests.filter(function(t){ return daysUntil(t.date) >= 0; });
     var past = tests.filter(function(t){ return daysUntil(t.date) < 0; }).reverse();
 
@@ -4968,12 +5025,26 @@
       items.forEach(function(it){
         var row = document.createElement('div');
         row.className = 'home-today-item' + (it.cellData.important ? ' home-important' : '') + (it.cellData.done ? ' home-done' : '');
+        var check = document.createElement('button');
+        check.type = 'button';
+        check.className = 'home-today-check' + (it.cellData.done ? ' checked' : '');
+        check.title = it.cellData.done ? 'Markeer als niet af' : 'Markeer als af';
+        check.innerHTML = it.cellData.done ? ICONS.check : '';
+        check.addEventListener('click', function(){
+          it.cellData.done = !it.cellData.done;
+          if(it.cellData.done) it.cellData.important = false;
+          setCellData(todayWeek, it.subj.id, dayKey, it.cellData);
+          syncTestFromCell(todayWeek, it.subj, dayKey, today, it.cellData);
+          save();
+          renderHomePanel();
+        });
         var vak = document.createElement('span');
         vak.className = 'home-today-vak';
         vak.textContent = it.subj.label;
         var txt = document.createElement('span');
         txt.className = 'home-today-text';
         txt.textContent = it.cellData.text || '(geen tekst, alleen gemarkeerd)';
+        row.appendChild(check);
         row.appendChild(vak);
         row.appendChild(txt);
         list.appendChild(row);
@@ -4983,7 +5054,7 @@
     card.appendChild(body);
     contentEl.appendChild(card);
 
-    var soonTests = ensureTests().filter(function(t){ return daysUntil(t.date) >= 0; }).sort(function(a, b){ return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); }).slice(0, 5);
+    var soonTests = ensureTests().filter(function(t){ return daysUntil(t.date) >= 0 && daysUntil(t.date) <= 14; }).sort(function(a, b){ return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); }).slice(0, 5);
     if(soonTests.length){
       var tCard = document.createElement('div');
       tCard.className = 'section-card';
