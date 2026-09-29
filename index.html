@@ -1824,6 +1824,22 @@
         anwBh.chapters = anwBh.chapters.concat(SEED_BIGHISTORY_CHAPTERS);
       }
     }
+
+    // Self-healing: vakjes die al vóór de toetsenlijst op "Belangrijk" stonden, kregen nog
+    // geen gekoppelde toets — dat halen we hier eenmalig in.
+    ensureTests();
+    (state.planner.weeks || []).forEach(function(week){
+      var monday = dateFromISO(week.startDate);
+      Object.keys(week.cells || {}).forEach(function(subjId){
+        PLANNER_DAYS.forEach(function(d, i){
+          var cellData = getCellData(week, subjId, d.key);
+          if(!cellData.important) return;
+          var key = cellTestKey(week.id, subjId, d.key);
+          if(state.planner.tests.some(function(t){ return t.cellKey === key; })) return;
+          state.planner.tests.push({ id: uid('test'), date: isoDate(addDays(monday, i)), subjectId: subjId, title: (cellData.text || '').trim(), cellKey: key });
+        });
+      });
+    });
   }
 
   function saveLocal(){
@@ -4624,6 +4640,7 @@
           cellData.important = !cellData.important;
           if(cellData.important) cellData.done = false;
           setCellData(week, subj.id, d.key, cellData);
+          syncTestFromCell(week, subj, d.key, dayDates[i], cellData);
           save();
           renderPlannerPanel();
         });
@@ -4636,6 +4653,7 @@
           cellData.done = !cellData.done;
           if(cellData.done) cellData.important = false;
           setCellData(week, subj.id, d.key, cellData);
+          syncTestFromCell(week, subj, d.key, dayDates[i], cellData);
           save();
           renderPlannerPanel();
         });
@@ -4655,6 +4673,27 @@
   }
 
   // ---------- Toetsdatums ----------
+  function cellTestKey(weekId, subjId, dayKey){ return weekId + '|' + subjId + '|' + dayKey; }
+  // Een vakje op "Belangrijk" zetten betekent in de praktijk vrijwel altijd een toets, dus
+  // die twee markeringen houden we automatisch synchroon — geen dubbel werk, geen twee
+  // los van elkaar levende systemen die uit de pas kunnen lopen.
+  function syncTestFromCell(week, subj, dayKey, dayDate, cellData){
+    var list = ensureTests();
+    var key = cellTestKey(week.id, subj.id, dayKey);
+    var existing = list.find(function(t){ return t.cellKey === key; });
+    if(cellData.important){
+      var iso = isoDate(dayDate);
+      if(existing){
+        existing.date = iso;
+        existing.subjectId = subj.id;
+        if(cellData.text && cellData.text.trim()) existing.title = cellData.text.trim();
+      } else {
+        list.push({ id: uid('test'), date: iso, subjectId: subj.id, title: (cellData.text || '').trim(), cellKey: key });
+      }
+    } else if(existing){
+      state.planner.tests = list.filter(function(t){ return t.cellKey !== key; });
+    }
+  }
   function ensureTests(){
     if(!state.planner) return [];
     if(!Array.isArray(state.planner.tests)) state.planner.tests = [];
