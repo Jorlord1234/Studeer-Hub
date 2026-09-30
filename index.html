@@ -757,6 +757,64 @@
   .home-vak-tile:hover{ border-color: var(--tile-color, var(--accent)); }
   .home-vak-dot{ width:12px; height:12px; border-radius:50%; flex-shrink:0; }
 
+
+  /* ---------- Home widgets (iPhone-stijl) ---------- */
+  .home-grid{
+    display:grid; grid-template-columns: repeat(4, minmax(0,1fr));
+    grid-auto-rows: 100px; grid-auto-flow: row dense; gap: 14px;
+  }
+  .hw{ position:relative; min-width:0; min-height:0; }
+  .hw > .section-card{ margin:0; height:100%; display:flex; flex-direction:column; }
+  .hw > .section-card > .section-head{ flex-shrink:0; padding: 10px 14px; }
+  .hw > .section-card > .section-body{ flex:1; min-height:0; overflow:auto; padding: 12px 14px; }
+  .hw > .home-period-banner{ margin:0; height:100%; display:flex; align-items:center; overflow:auto; }
+  .hw .home-vak-grid{ margin-top:0; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); }
+  .hw .home-vak-tile{ padding: 10px 12px; }
+  .hw-empty{ color: var(--text-soft); font-style: italic; font-size: 13.5px; margin:0; }
+  .home-edit-bar{ margin: -8px 0 16px; }
+  .home-edit-hint{ color: var(--text-soft); font-size: 13.5px; margin: 0 0 10px; }
+  .home-edit-tray{ display:flex; flex-wrap:wrap; gap:8px; }
+  .home-tray-chip{
+    border: 1.5px dashed var(--accent); color: var(--accent); background: transparent;
+    border-radius: 999px; padding: 5px 12px; font-family: var(--font-body); font-size: 13px; cursor:pointer;
+  }
+  .home-tray-chip:hover{ background: var(--accent-soft); }
+  .home-grid.editing .hw{ touch-action:none; cursor:grab; animation: hwWiggle .45s ease-in-out infinite alternate; }
+  .home-grid.editing .hw:nth-child(even){ animation-delay: -.2s; }
+  .home-grid.editing .hw > :not(.hw-edit){ pointer-events:none; }
+  .home-grid.editing .hw.hw-dragging{
+    animation:none; cursor:grabbing; z-index:20; transition:none; user-select:none;
+    box-shadow: var(--shadow); border-radius: var(--radius); opacity:.95;
+  }
+  @keyframes hwWiggle{ from{ transform: rotate(-.35deg); } to{ transform: rotate(.35deg); } }
+  @media (prefers-reduced-motion: reduce){ .home-grid.editing .hw{ animation:none; } }
+  .hw-edit{
+    position:absolute; inset:0; border-radius: var(--radius);
+    border: 2px dashed var(--accent); background: var(--hover-overlay-strong);
+    -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px);
+    display:flex; flex-direction:column; justify-content:space-between; padding: 8px; z-index:2;
+  }
+  .hw-edit-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .hw-edit-name{
+    font-weight:700; font-size:13px; background: var(--panel-bg); color: var(--accent);
+    padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .hw-edit-remove{
+    width:26px; height:26px; border-radius:50%; border:none; cursor:pointer; flex-shrink:0;
+    background: var(--danger); color:#fff; font-size:15px; line-height:1; display:flex; align-items:center; justify-content:center;
+  }
+  .hw-edit-sizes{ display:flex; flex-wrap:wrap; gap:4px; justify-content:center; }
+  .hw-size-btn{
+    border: 1.5px solid var(--border); background: var(--panel-bg); color: var(--text);
+    border-radius: 999px; padding: 2px 9px; font-family: var(--font-body); font-size: 12px; cursor:pointer;
+  }
+  .hw-size-btn:hover{ border-color: var(--accent); }
+  .hw-size-btn.active{ background: var(--accent); border-color: var(--accent); color:#fff; font-weight:700; }
+  @media (max-width: 720px){
+    .home-grid{ grid-auto-rows: 84px; gap: 10px; }
+  }
+
   /* ---------- Cijfers ---------- */
   .grades-vak-chips{ margin: 14px 0 18px; }
   .grade-vak-chip{ cursor:pointer; background: var(--panel-bg); border: 1.5px solid var(--border); }
@@ -4831,7 +4889,6 @@
         doneBtn.innerHTML = ICONS.check + '<span>Af</span>';
         doneBtn.addEventListener('click', function(){
           cellData.done = !cellData.done;
-          if(cellData.done) cellData.important = false;
           setCellData(week, subj.id, d.key, cellData);
           syncTestFromCell(week, subj, d.key, dayDates[i], cellData);
           save();
@@ -5287,73 +5344,43 @@
     return 'Goedenavond';
   }
   var HOME_SECTIONS = { period: 'Periode-melding (vakantie/blok)', today: 'Vandaag', tests: 'Aankomende toetsen', grades: 'Cijfers', vakken: 'Vakken' };
-  var HOME_SECTIONS_DEFAULT_ORDER = ['period', 'today', 'tests', 'grades', 'vakken'];
+  var HOME_SIZES = {
+    '2x2': { c: 2, r: 2, label: 'Klein' },
+    '4x1': { c: 4, r: 1, label: 'Smal' },
+    '4x2': { c: 4, r: 2, label: 'Breed' },
+    '2x4': { c: 2, r: 4, label: 'Hoog' },
+    '4x4': { c: 4, r: 4, label: 'Groot' }
+  };
+  var HOME_DEFAULTS = [
+    { key: 'period', size: '4x1' },
+    { key: 'today',  size: '4x2' },
+    { key: 'tests',  size: '2x2' },
+    { key: 'grades', size: '2x4' },
+    { key: 'vakken', size: '2x2' }
+  ];
+  var homeEditing = false;
+  // De indeling wordt in state.planner.homeWidgets bewaard, zodat hij automatisch
+  // mee gaat met opslaan, Firebase-sync en export/import.
   function ensureHomeLayout(){
-    if(!Array.isArray(state.homeLayout)) state.homeLayout = HOME_SECTIONS_DEFAULT_ORDER.slice();
-    var valid = state.homeLayout.filter(function(k){ return HOME_SECTIONS.hasOwnProperty(k); });
-    HOME_SECTIONS_DEFAULT_ORDER.forEach(function(k){ if(valid.indexOf(k) === -1) valid.push(k); });
-    state.homeLayout = valid;
-    return state.homeLayout;
+    var p = state.planner;
+    var cur = Array.isArray(p.homeWidgets) ? p.homeWidgets : [];
+    var seen = {}, out = [];
+    cur.forEach(function(w){
+      if(!w || !HOME_SECTIONS.hasOwnProperty(w.key) || seen[w.key]) return;
+      seen[w.key] = true;
+      var def = HOME_DEFAULTS.filter(function(d){ return d.key === w.key; })[0];
+      out.push({ key: w.key, size: HOME_SIZES[w.size] ? w.size : def.size, hidden: !!w.hidden });
+    });
+    HOME_DEFAULTS.forEach(function(d){
+      if(!seen[d.key]) out.push({ key: d.key, size: d.size, hidden: false });
+    });
+    p.homeWidgets = out;
+    return out;
   }
-  function openHomeLayoutEditor(){
-    var body = document.createElement('div');
-    var listEl = document.createElement('div');
-    listEl.className = 'home-layout-list';
-    function draw(){
-      listEl.innerHTML = '';
-      ensureHomeLayout().forEach(function(key, i){
-        var row = document.createElement('div');
-        row.className = 'home-layout-row';
-        var name = document.createElement('span');
-        name.textContent = HOME_SECTIONS[key];
-        row.appendChild(name);
-        var btns = document.createElement('div');
-        btns.className = 'home-layout-btns';
-        var upBtn = document.createElement('button');
-        upBtn.type = 'button';
-        upBtn.className = 'icon-btn';
-        upBtn.disabled = i === 0;
-        upBtn.textContent = '▲';
-        upBtn.title = 'Omhoog';
-        upBtn.addEventListener('click', function(){
-          var arr = state.homeLayout;
-          var tmp = arr[i - 1]; arr[i - 1] = arr[i]; arr[i] = tmp;
-          save(); draw();
-        });
-        var downBtn = document.createElement('button');
-        downBtn.type = 'button';
-        downBtn.className = 'icon-btn';
-        downBtn.disabled = i === ensureHomeLayout().length - 1;
-        downBtn.textContent = '▼';
-        downBtn.title = 'Omlaag';
-        downBtn.addEventListener('click', function(){
-          var arr = state.homeLayout;
-          var tmp = arr[i + 1]; arr[i + 1] = arr[i]; arr[i] = tmp;
-          save(); draw();
-        });
-        btns.appendChild(upBtn);
-        btns.appendChild(downBtn);
-        row.appendChild(btns);
-        listEl.appendChild(row);
-      });
-    }
-    draw();
-    body.appendChild(listEl);
-    var info = document.createElement('p');
-    info.className = 'quiz-setup-info';
-    info.textContent = 'Verschuif onderdelen van het startscherm. Wijzigingen worden direct opgeslagen.';
-    body.appendChild(info);
-    var actions = document.createElement('div');
-    actions.className = 'modal-actions';
-    actions.style.marginTop = '14px';
-    var overlay;
-    var closeBtn = document.createElement('button');
-    closeBtn.className = 'btn primary';
-    closeBtn.textContent = 'Klaar';
-    closeBtn.addEventListener('click', function(){ overlay.close(); renderHomePanel(); });
-    actions.appendChild(closeBtn);
-    body.appendChild(actions);
-    overlay = openOverlay({ title: 'Startscherm indelen', bodyEl: body, width: '340px' });
+  function resetHomeLayout(){
+    state.planner.homeWidgets = HOME_DEFAULTS.map(function(d){ return { key: d.key, size: d.size, hidden: false }; });
+    save();
+    renderHomePanel();
   }
   function buildHomePeriodBanner(){
     var todayISOForPeriod = isoDate(new Date());
@@ -5412,7 +5439,6 @@
         check.innerHTML = it.cellData.done ? ICONS.check : '';
         check.addEventListener('click', function(){
           it.cellData.done = !it.cellData.done;
-          if(it.cellData.done) it.cellData.important = false;
           setCellData(todayWeek, it.subj.id, dayKey, it.cellData);
           syncTestFromCell(todayWeek, it.subj, dayKey, today, it.cellData);
           save();
@@ -5538,6 +5564,182 @@
     });
     return grid;
   }
+  function homeWidgetContent(key){
+    var builders = {
+      period: buildHomePeriodBanner,
+      today: buildHomeTodayCard,
+      tests: buildHomeTestsCard,
+      grades: buildHomeGradesCard,
+      vakken: function(){
+        var card = document.createElement('div');
+        card.className = 'section-card';
+        var head = document.createElement('div');
+        head.className = 'section-head';
+        var label = document.createElement('span');
+        label.className = 'section-label';
+        label.textContent = 'Vakken';
+        head.appendChild(label);
+        card.appendChild(head);
+        var body = document.createElement('div');
+        body.className = 'section-body';
+        body.appendChild(buildHomeVakGrid());
+        card.appendChild(body);
+        return card;
+      }
+    };
+    return builders[key] ? builders[key]() : null;
+  }
+  var HOME_EMPTY_TEXT = {
+    period: 'Geen vakantie of blok in de buurt.',
+    tests: 'Geen toetsen in de komende 14 dagen.',
+    grades: 'Nog geen vakken.',
+    today: 'Niks gepland.',
+    vakken: 'Nog geen vakken.'
+  };
+  function buildHomeEmptyWidget(key){
+    var card = document.createElement('div');
+    card.className = 'section-card';
+    var head = document.createElement('div');
+    head.className = 'section-head';
+    var label = document.createElement('span');
+    label.className = 'section-label';
+    label.textContent = HOME_SECTIONS[key];
+    head.appendChild(label);
+    card.appendChild(head);
+    var body = document.createElement('div');
+    body.className = 'section-body';
+    var p = document.createElement('p');
+    p.className = 'hw-empty';
+    p.textContent = HOME_EMPTY_TEXT[key] || '';
+    body.appendChild(p);
+    card.appendChild(body);
+    return card;
+  }
+  function applyHomeSize(el, sizeKey){
+    var sz = HOME_SIZES[sizeKey];
+    el.style.gridColumn = 'span ' + sz.c;
+    el.style.gridRow = 'span ' + sz.r;
+  }
+  function buildHomeEditOverlay(w){
+    var ov = document.createElement('div');
+    ov.className = 'hw-edit';
+    var top = document.createElement('div');
+    top.className = 'hw-edit-top';
+    var name = document.createElement('span');
+    name.className = 'hw-edit-name';
+    name.textContent = HOME_SECTIONS[w.key];
+    var rm = document.createElement('button');
+    rm.type = 'button';
+    rm.className = 'hw-edit-remove';
+    rm.title = 'Verberg dit onderdeel';
+    rm.textContent = '×';
+    rm.addEventListener('click', function(){
+      w.hidden = true;
+      save();
+      renderHomePanel();
+    });
+    top.appendChild(name);
+    top.appendChild(rm);
+    ov.appendChild(top);
+    var sizes = document.createElement('div');
+    sizes.className = 'hw-edit-sizes';
+    Object.keys(HOME_SIZES).forEach(function(k){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'hw-size-btn' + (w.size === k ? ' active' : '');
+      b.textContent = HOME_SIZES[k].label;
+      b.title = HOME_SIZES[k].label + ' (' + k.replace('x', '×') + ')';
+      b.addEventListener('click', function(){
+        w.size = k;
+        save();
+        renderHomePanel();
+      });
+      sizes.appendChild(b);
+    });
+    ov.appendChild(sizes);
+    return ov;
+  }
+  // Slepen: het widget volgt je vinger/muis, de anderen schuiven vloeiend op.
+  function attachHomeDrag(el, grid){
+    el.addEventListener('pointerdown', function(e){
+      if(e.button !== undefined && e.button !== 0) return;
+      if(e.target.closest('button')) return;
+      var startX = e.clientX, startY = e.clientY;
+      var dragging = false, grabDX = 0, grabDY = 0, lock = 0;
+      var scroller = document.getElementById('content-scroll');
+      function others(){
+        return Array.prototype.filter.call(grid.children, function(c){ return c !== el && c.classList.contains('hw'); });
+      }
+      function place(ev){
+        el.style.transform = '';
+        var nr = el.getBoundingClientRect();
+        el.style.transform = 'translate(' + (ev.clientX - grabDX - nr.left) + 'px,' + (ev.clientY - grabDY - nr.top) + 'px)';
+        return nr;
+      }
+      function onMove(ev){
+        if(!dragging){
+          if(Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) < 6) return;
+          dragging = true;
+          var r0 = el.getBoundingClientRect();
+          grabDX = startX - r0.left;
+          grabDY = startY - r0.top;
+          el.classList.add('hw-dragging');
+        }
+        ev.preventDefault();
+        if(scroller){
+          var sr = scroller.getBoundingClientRect();
+          if(ev.clientY < sr.top + 50) scroller.scrollTop -= 14;
+          else if(ev.clientY > sr.bottom - 50) scroller.scrollTop += 14;
+        }
+        var nat = place(ev);
+        var inOwn = ev.clientX >= nat.left && ev.clientX <= nat.right && ev.clientY >= nat.top && ev.clientY <= nat.bottom;
+        if(inOwn || Date.now() < lock) return;
+        var hit = others().filter(function(o){
+          var r = o.getBoundingClientRect();
+          return ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom;
+        })[0];
+        if(!hit) return;
+        var kids = Array.prototype.slice.call(grid.children);
+        var before = others().map(function(o){ return { o: o, r: o.getBoundingClientRect() }; });
+        if(kids.indexOf(el) < kids.indexOf(hit)) grid.insertBefore(el, hit.nextSibling);
+        else grid.insertBefore(el, hit);
+        before.forEach(function(b){
+          var a = b.o.getBoundingClientRect();
+          var dx = b.r.left - a.left, dy = b.r.top - a.top;
+          if(!dx && !dy) return;
+          b.o.style.transition = 'none';
+          b.o.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+          void b.o.offsetWidth;
+          b.o.style.transition = 'transform .18s ease';
+          b.o.style.transform = '';
+        });
+        place(ev);
+        lock = Date.now() + 160;
+      }
+      function onUp(){
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
+        if(!dragging) return;
+        el.classList.remove('hw-dragging');
+        el.style.transition = 'transform .15s ease';
+        el.style.transform = '';
+        var layout = ensureHomeLayout();
+        var byKey = {};
+        layout.forEach(function(w){ byKey[w.key] = w; });
+        var next = [];
+        Array.prototype.forEach.call(grid.children, function(c){
+          if(c.dataset && byKey[c.dataset.key]){ next.push(byKey[c.dataset.key]); delete byKey[c.dataset.key]; }
+        });
+        Object.keys(byKey).forEach(function(k){ next.push(byKey[k]); });
+        state.planner.homeWidgets = next;
+        save();
+      }
+      document.addEventListener('pointermove', onMove, { passive: false });
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
+    });
+  }
   function renderHomePanel(){
     contentEl.innerHTML = '';
     var titleRow = document.createElement('div');
@@ -5546,23 +5748,73 @@
     h1.className = 'paragraph-title';
     h1.textContent = greetingForNow();
     titleRow.appendChild(h1);
-    var layoutBtn = iconBtn('swap', 'Startscherm indelen', 'oefentoets-btn');
-    layoutBtn.addEventListener('click', function(){ openHomeLayoutEditor(); });
-    titleRow.appendChild(layoutBtn);
+    if(homeEditing){
+      var doneBtn = document.createElement('button');
+      doneBtn.type = 'button';
+      doneBtn.className = 'btn primary';
+      doneBtn.textContent = 'Klaar';
+      doneBtn.addEventListener('click', function(){ homeEditing = false; renderHomePanel(); });
+      titleRow.appendChild(doneBtn);
+      var resetBtn = document.createElement('button');
+      resetBtn.type = 'button';
+      resetBtn.className = 'btn';
+      resetBtn.textContent = 'Herstel standaard';
+      resetBtn.addEventListener('click', resetHomeLayout);
+      titleRow.appendChild(resetBtn);
+    } else {
+      var layoutBtn = iconBtn('swap', 'Startscherm indelen', 'oefentoets-btn');
+      layoutBtn.addEventListener('click', function(){ homeEditing = true; renderHomePanel(); });
+      titleRow.appendChild(layoutBtn);
+    }
     contentEl.appendChild(titleRow);
 
-    var homeBuilders = {
-      period: buildHomePeriodBanner,
-      today: buildHomeTodayCard,
-      tests: buildHomeTestsCard,
-      grades: buildHomeGradesCard,
-      vakken: buildHomeVakGrid
-    };
-    ensureHomeLayout().forEach(function(key){
-      var builder = homeBuilders[key];
-      var el = builder && builder();
-      if(el) contentEl.appendChild(el);
+    var layout = ensureHomeLayout();
+
+    if(homeEditing){
+      var bar = document.createElement('div');
+      bar.className = 'home-edit-bar';
+      var hint = document.createElement('p');
+      hint.className = 'home-edit-hint';
+      hint.textContent = 'Sleep een onderdeel om het te verplaatsen, kies een formaat, of verberg het met ×.';
+      bar.appendChild(hint);
+      var hidden = layout.filter(function(w){ return w.hidden; });
+      if(hidden.length){
+        var tray = document.createElement('div');
+        tray.className = 'home-edit-tray';
+        hidden.forEach(function(w){
+          var chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'home-tray-chip';
+          chip.textContent = '+ ' + HOME_SECTIONS[w.key];
+          chip.addEventListener('click', function(){ w.hidden = false; save(); renderHomePanel(); });
+          tray.appendChild(chip);
+        });
+        bar.appendChild(tray);
+      }
+      contentEl.appendChild(bar);
+    }
+
+    var grid = document.createElement('div');
+    grid.className = 'home-grid' + (homeEditing ? ' editing' : '');
+    layout.forEach(function(w){
+      if(w.hidden) return;
+      var content = homeWidgetContent(w.key);
+      if(!content){
+        if(!homeEditing) return;
+        content = buildHomeEmptyWidget(w.key);
+      }
+      var el = document.createElement('div');
+      el.className = 'hw';
+      el.dataset.key = w.key;
+      applyHomeSize(el, w.size);
+      el.appendChild(content);
+      if(homeEditing){
+        el.appendChild(buildHomeEditOverlay(w));
+        attachHomeDrag(el, grid);
+      }
+      grid.appendChild(el);
     });
+    contentEl.appendChild(grid);
   }
 
   // ---------- Cijfers ----------
