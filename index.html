@@ -685,6 +685,38 @@
     margin-bottom: 16px; cursor: pointer;
   }
   .home-period-banner:hover{ opacity: 0.85; }
+  .home-grades-list{ display:flex; flex-direction:column; gap:2px; }
+  .home-grade-row{
+    display:flex; justify-content:space-between; align-items:center; width:100%;
+    background:transparent; border:none; padding:10px 4px; cursor:pointer;
+    font-family: var(--font-body); font-size:14.5px; color: var(--text); text-align:left;
+    border-bottom: 1px solid var(--border);
+  }
+  .home-grade-row:last-of-type{ border-bottom:none; }
+  .home-grade-row:hover{ color: var(--accent); }
+  .home-grade-left{ display:flex; align-items:center; gap:10px; }
+  .home-grade-dot{ width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+  .home-grade-avg{
+    min-width: 44px; text-align:center; font-weight:700; font-size:14px;
+    padding: 5px 10px; border-radius: 8px; background: var(--panel-bg); border: 1.5px solid var(--border);
+  }
+  .home-grade-avg.low{ color: var(--danger); border-color: var(--danger); }
+  .home-grade-avg.none{ color: var(--text-soft); }
+  .home-grade-total-row{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding: 12px 4px 2px; border-top: 1.5px solid var(--border); margin-top: 6px;
+  }
+  .home-grade-total-label{ font-weight:700; font-size:15px; }
+  .home-grade-total-caption{ font-size:12px; color: var(--text-soft); margin-top:2px; }
+  .home-grade-total-val{ font-weight:700; font-size:19px; color: var(--accent); white-space:nowrap; }
+  .home-layout-list{ display:flex; flex-direction:column; gap:6px; }
+  .home-layout-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding: 9px 12px; border-radius:9px; border:1.5px solid var(--border);
+    font-size:14.5px;
+  }
+  .home-layout-btns{ display:flex; gap:4px; }
+  .home-layout-btns .icon-btn{ width:28px; height:28px; font-size:12px; }
   .week-day-cell.cell-test{ outline:2px solid var(--danger); outline-offset:-2px; }
   .test-editor-field{ display:block; margin-bottom:12px; }
   .test-editor-field > span{ display:block; font-size:12.5px; color: var(--text-soft); margin-bottom:5px; }
@@ -5144,7 +5176,7 @@
   }
   function renderPeriodsCard(){
     var todayISO = isoDate(new Date());
-    var relevant = ensurePeriods().filter(function(p){ return p.endDate >= todayISO && daysUntil(p.startDate) <= 30; }).sort(function(a, b){ return a.startDate < b.startDate ? -1 : (a.startDate > b.startDate ? 1 : 0); });
+    var relevant = ensurePeriods().filter(function(p){ return p.endDate >= todayISO; }).sort(function(a, b){ return a.startDate < b.startDate ? -1 : (a.startDate > b.startDate ? 1 : 0); });
 
     var card = document.createElement('div');
     card.className = 'section-card';
@@ -5254,32 +5286,92 @@
     if(h < 18) return 'Goedemiddag';
     return 'Goedenavond';
   }
-  function renderHomePanel(){
-    contentEl.innerHTML = '';
-    var titleRow = document.createElement('div');
-    titleRow.className = 'paragraph-title-row';
-    var h1 = document.createElement('h1');
-    h1.className = 'paragraph-title';
-    h1.textContent = greetingForNow();
-    titleRow.appendChild(h1);
-    contentEl.appendChild(titleRow);
-
+  var HOME_SECTIONS = { period: 'Periode-melding (vakantie/blok)', today: 'Vandaag', tests: 'Aankomende toetsen', grades: 'Cijfers', vakken: 'Vakken' };
+  var HOME_SECTIONS_DEFAULT_ORDER = ['period', 'today', 'tests', 'grades', 'vakken'];
+  function ensureHomeLayout(){
+    if(!Array.isArray(state.homeLayout)) state.homeLayout = HOME_SECTIONS_DEFAULT_ORDER.slice();
+    var valid = state.homeLayout.filter(function(k){ return HOME_SECTIONS.hasOwnProperty(k); });
+    HOME_SECTIONS_DEFAULT_ORDER.forEach(function(k){ if(valid.indexOf(k) === -1) valid.push(k); });
+    state.homeLayout = valid;
+    return state.homeLayout;
+  }
+  function openHomeLayoutEditor(){
+    var body = document.createElement('div');
+    var listEl = document.createElement('div');
+    listEl.className = 'home-layout-list';
+    function draw(){
+      listEl.innerHTML = '';
+      ensureHomeLayout().forEach(function(key, i){
+        var row = document.createElement('div');
+        row.className = 'home-layout-row';
+        var name = document.createElement('span');
+        name.textContent = HOME_SECTIONS[key];
+        row.appendChild(name);
+        var btns = document.createElement('div');
+        btns.className = 'home-layout-btns';
+        var upBtn = document.createElement('button');
+        upBtn.type = 'button';
+        upBtn.className = 'icon-btn';
+        upBtn.disabled = i === 0;
+        upBtn.textContent = '▲';
+        upBtn.title = 'Omhoog';
+        upBtn.addEventListener('click', function(){
+          var arr = state.homeLayout;
+          var tmp = arr[i - 1]; arr[i - 1] = arr[i]; arr[i] = tmp;
+          save(); draw();
+        });
+        var downBtn = document.createElement('button');
+        downBtn.type = 'button';
+        downBtn.className = 'icon-btn';
+        downBtn.disabled = i === ensureHomeLayout().length - 1;
+        downBtn.textContent = '▼';
+        downBtn.title = 'Omlaag';
+        downBtn.addEventListener('click', function(){
+          var arr = state.homeLayout;
+          var tmp = arr[i + 1]; arr[i + 1] = arr[i]; arr[i] = tmp;
+          save(); draw();
+        });
+        btns.appendChild(upBtn);
+        btns.appendChild(downBtn);
+        row.appendChild(btns);
+        listEl.appendChild(row);
+      });
+    }
+    draw();
+    body.appendChild(listEl);
+    var info = document.createElement('p');
+    info.className = 'quiz-setup-info';
+    info.textContent = 'Verschuif onderdelen van het startscherm. Wijzigingen worden direct opgeslagen.';
+    body.appendChild(info);
+    var actions = document.createElement('div');
+    actions.className = 'modal-actions';
+    actions.style.marginTop = '14px';
+    var overlay;
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'btn primary';
+    closeBtn.textContent = 'Klaar';
+    closeBtn.addEventListener('click', function(){ overlay.close(); renderHomePanel(); });
+    actions.appendChild(closeBtn);
+    body.appendChild(actions);
+    overlay = openOverlay({ title: 'Startscherm indelen', bodyEl: body, width: '340px' });
+  }
+  function buildHomePeriodBanner(){
     var todayISOForPeriod = isoDate(new Date());
     var activePeriods = periodsOnDate(todayISOForPeriod);
     var nextPeriod = ensurePeriods().filter(function(p){ return p.startDate > todayISOForPeriod && daysUntil(p.startDate) <= 14; }).sort(function(a, b){ return a.startDate < b.startDate ? -1 : 1; })[0];
-    if(activePeriods.length || nextPeriod){
-      var periodBanner = document.createElement('div');
-      periodBanner.className = 'home-period-banner';
-      if(activePeriods.length){
-        var ap = activePeriods[0];
-        periodBanner.textContent = 'Op dit moment: ' + ap.type + (ap.label ? ' — ' + ap.label : '') + ' (tot ' + formatShortDate(dateFromISO(ap.endDate)) + ')';
-      } else {
-        periodBanner.textContent = 'Binnenkort: ' + nextPeriod.type + (nextPeriod.label ? ' — ' + nextPeriod.label : '') + ' (' + periodStatusLabel(nextPeriod) + ')';
-      }
-      periodBanner.addEventListener('click', function(){ goToPlanner(); });
-      contentEl.appendChild(periodBanner);
+    if(!activePeriods.length && !nextPeriod) return null;
+    var periodBanner = document.createElement('div');
+    periodBanner.className = 'home-period-banner';
+    if(activePeriods.length){
+      var ap = activePeriods[0];
+      periodBanner.textContent = 'Op dit moment: ' + ap.type + (ap.label ? ' — ' + ap.label : '') + ' (tot ' + formatShortDate(dateFromISO(ap.endDate)) + ')';
+    } else {
+      periodBanner.textContent = 'Binnenkort: ' + nextPeriod.type + (nextPeriod.label ? ' — ' + nextPeriod.label : '') + ' (' + periodStatusLabel(nextPeriod) + ')';
     }
-
+    periodBanner.addEventListener('click', function(){ goToPlanner(); });
+    return periodBanner;
+  }
+  function buildHomeTodayCard(){
     var today = new Date();
     var todayWeek = findWeekCoveringDate(today);
     var dayKey = DAY_KEY_BY_JS_DAY[today.getDay()];
@@ -5340,26 +5432,91 @@
       body.appendChild(list);
     }
     card.appendChild(body);
-    contentEl.appendChild(card);
-
+    return card;
+  }
+  function buildHomeTestsCard(){
     var soonTests = ensureTests().filter(function(t){ return daysUntil(t.date) >= 0 && daysUntil(t.date) <= 14; }).sort(function(a, b){ return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); }).slice(0, 5);
-    if(soonTests.length){
-      var tCard = document.createElement('div');
-      tCard.className = 'section-card';
-      var tHead = document.createElement('div');
-      tHead.className = 'section-head';
-      var tLabel = document.createElement('span');
-      tLabel.className = 'section-label';
-      tLabel.textContent = 'Aankomende toetsen';
-      tHead.appendChild(tLabel);
-      tCard.appendChild(tHead);
-      var tBody = document.createElement('div');
-      tBody.className = 'section-body';
-      soonTests.forEach(function(t){ tBody.appendChild(testRow(t, function(){ goToPlanner(); })); });
-      tCard.appendChild(tBody);
-      contentEl.appendChild(tCard);
+    if(!soonTests.length) return null;
+    var tCard = document.createElement('div');
+    tCard.className = 'section-card';
+    var tHead = document.createElement('div');
+    tHead.className = 'section-head';
+    var tLabel = document.createElement('span');
+    tLabel.className = 'section-label';
+    tLabel.textContent = 'Aankomende toetsen';
+    tHead.appendChild(tLabel);
+    tCard.appendChild(tHead);
+    var tBody = document.createElement('div');
+    tBody.className = 'section-body';
+    soonTests.forEach(function(t){ tBody.appendChild(testRow(t, function(){ goToPlanner(); })); });
+    tCard.appendChild(tBody);
+    return tCard;
+  }
+  function buildHomeGradesCard(){
+    if(!state.subjects.length) return null;
+    var gCard = document.createElement('div');
+    gCard.className = 'section-card';
+    var gHead = document.createElement('div');
+    gHead.className = 'section-head';
+    var gLabel = document.createElement('span');
+    gLabel.className = 'section-label';
+    gLabel.textContent = 'Cijfers';
+    gHead.appendChild(gLabel);
+    gCard.appendChild(gHead);
+    var gBody = document.createElement('div');
+    gBody.className = 'section-body home-grades-list';
+    var numericAvgs = [];
+    state.subjects.forEach(function(subj){
+      var g = state.grades[subj.id];
+      var avg = (g && g.items && g.items.length) ? weightedAverage(g.items) : null;
+      if(avg !== null) numericAvgs.push(avg);
+      var row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'home-grade-row';
+      var left = document.createElement('span');
+      left.className = 'home-grade-left';
+      var dot = document.createElement('span');
+      dot.className = 'home-grade-dot';
+      dot.style.background = subj.color;
+      var name = document.createElement('span');
+      name.textContent = subj.name;
+      left.appendChild(dot);
+      left.appendChild(name);
+      var val = document.createElement('span');
+      val.className = 'home-grade-avg' + (avg !== null && avg < 5.5 ? ' low' : '') + (avg === null ? ' none' : '');
+      val.textContent = avg !== null ? avg.toFixed(1).replace('.', ',') : '-';
+      row.appendChild(left);
+      row.appendChild(val);
+      row.addEventListener('click', function(){
+        state.selectedGradesSubjectId = subj.id;
+        goToGrades();
+      });
+      gBody.appendChild(row);
+    });
+    if(numericAvgs.length){
+      var totalRow = document.createElement('div');
+      totalRow.className = 'home-grade-total-row';
+      var totalLeft = document.createElement('div');
+      var totalLabel = document.createElement('div');
+      totalLabel.className = 'home-grade-total-label';
+      totalLabel.textContent = 'Totaalgemiddelde';
+      var totalCaption = document.createElement('div');
+      totalCaption.className = 'home-grade-total-caption';
+      totalCaption.textContent = 'Dit is een indicatief gemiddelde van alle vakken.';
+      totalLeft.appendChild(totalLabel);
+      totalLeft.appendChild(totalCaption);
+      var totalVal = document.createElement('div');
+      totalVal.className = 'home-grade-total-val';
+      var overallAvg = numericAvgs.reduce(function(a, b){ return a + b; }, 0) / numericAvgs.length;
+      totalVal.textContent = '~ ' + overallAvg.toFixed(1).replace('.', ',');
+      totalRow.appendChild(totalLeft);
+      totalRow.appendChild(totalVal);
+      gBody.appendChild(totalRow);
     }
-
+    gCard.appendChild(gBody);
+    return gCard;
+  }
+  function buildHomeVakGrid(){
     var grid = document.createElement('div');
     grid.className = 'home-vak-grid';
     state.subjects.forEach(function(subj){
@@ -5379,17 +5536,36 @@
       });
       grid.appendChild(tile);
     });
-    contentEl.appendChild(grid);
+    return grid;
+  }
+  function renderHomePanel(){
+    contentEl.innerHTML = '';
+    var titleRow = document.createElement('div');
+    titleRow.className = 'paragraph-title-row';
+    var h1 = document.createElement('h1');
+    h1.className = 'paragraph-title';
+    h1.textContent = greetingForNow();
+    titleRow.appendChild(h1);
+    var layoutBtn = iconBtn('swap', 'Startscherm indelen', 'oefentoets-btn');
+    layoutBtn.addEventListener('click', function(){ openHomeLayoutEditor(); });
+    titleRow.appendChild(layoutBtn);
+    contentEl.appendChild(titleRow);
+
+    var homeBuilders = {
+      period: buildHomePeriodBanner,
+      today: buildHomeTodayCard,
+      tests: buildHomeTestsCard,
+      grades: buildHomeGradesCard,
+      vakken: buildHomeVakGrid
+    };
+    ensureHomeLayout().forEach(function(key){
+      var builder = homeBuilders[key];
+      var el = builder && builder();
+      if(el) contentEl.appendChild(el);
+    });
   }
 
   // ---------- Cijfers ----------
-  var GRADE_TYPES = [
-    { key: 'toets', label: 'Toets' },
-    { key: 'so', label: 'SO' },
-    { key: 'pw', label: 'PW' },
-    { key: 'mondeling', label: 'Mondeling' },
-    { key: 'overig', label: 'Overig' }
-  ];
   function getGradesFor(subjId){
     if(!state.grades[subjId]) state.grades[subjId] = { items: [] };
     return state.grades[subjId];
@@ -5448,27 +5624,9 @@
 
     var table = document.createElement('div');
     table.className = 'grades-list';
-    g.items.sort(function(a, b){
-      if(!a.datum && !b.datum) return 0;
-      if(!a.datum) return 1;
-      if(!b.datum) return -1;
-      return a.datum < b.datum ? -1 : (a.datum > b.datum ? 1 : 0);
-    });
     g.items.forEach(function(item){
-      if(!item.type) item.type = 'toets';
       var row = document.createElement('div');
       row.className = 'grade-row';
-
-      var typeSel = document.createElement('select');
-      typeSel.className = 'grade-type-select';
-      GRADE_TYPES.forEach(function(t){
-        var o = document.createElement('option');
-        o.value = t.key; o.textContent = t.label;
-        if(t.key === item.type) o.selected = true;
-        typeSel.appendChild(o);
-      });
-      typeSel.addEventListener('change', function(){ item.type = typeSel.value; save(); });
-      row.appendChild(typeSel);
 
       var nameIn = document.createElement('input');
       nameIn.type = 'text';
@@ -5477,13 +5635,6 @@
       nameIn.value = item.naam || '';
       nameIn.addEventListener('input', function(){ item.naam = nameIn.value; save(); });
       row.appendChild(nameIn);
-
-      var dateIn = document.createElement('input');
-      dateIn.type = 'date';
-      dateIn.className = 'grade-date-input';
-      dateIn.value = item.datum || '';
-      dateIn.addEventListener('input', function(){ item.datum = dateIn.value; save(); });
-      row.appendChild(dateIn);
 
       var cIn = document.createElement('input');
       cIn.type = 'number'; cIn.step = '0.1'; cIn.min = '1'; cIn.max = '10';
@@ -5514,7 +5665,7 @@
     addBtn.className = 'add-section-btn';
     addBtn.textContent = '＋ Cijfer toevoegen';
     addBtn.addEventListener('click', function(){
-      g.items.push({ id: uid('grade'), naam: '', type: 'toets', datum: '', cijfer: '', weging: '1' });
+      g.items.push({ id: uid('grade'), naam: '', cijfer: '', weging: '1' });
       save(); renderGradesPanel();
     });
     body.appendChild(addBtn);
