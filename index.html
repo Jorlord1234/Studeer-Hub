@@ -282,6 +282,10 @@
   .breadcrumb b{ color: var(--text); }
   .breadcrumb .sep{ color: var(--border); }
   .topbar-actions{ display:flex; align-items:center; gap:10px; }
+  .topbar-clock{
+    font-family: var(--font-display); font-size: 20px; font-weight:600; color: var(--text);
+    font-variant-numeric: tabular-nums; letter-spacing: 0.02em; padding: 0 6px; white-space:nowrap;
+  }
   .action-group{ display:flex; gap:8px; align-items:center; }
   .action-divider{ width:1px; height:22px; background: var(--border); flex-shrink:0; }
   .btn{
@@ -825,6 +829,8 @@
   .hw-note-input::placeholder{ color: var(--text-soft); }
   .hw-note-input:focus{ background: var(--panel-bg-soft); }
 
+  .hw .section-head .hw-add-grade{ padding: 4px 11px; font-size: 12.5px; }
+
   /* ---------- Cijfers ---------- */
   .grades-vak-chips{ margin: 14px 0 18px; }
   .grade-vak-chip{ cursor:pointer; background: var(--panel-bg); border: 1.5px solid var(--border); }
@@ -1119,6 +1125,7 @@
     <div id="topbar">
       <div class="breadcrumb" id="breadcrumb"></div>
       <div class="topbar-actions">
+        <div class="topbar-clock" id="topbar-clock" title="Tijd" aria-label="Tijd"></div>
         <div class="action-group" style="position:relative;">
           <button class="btn" id="settings-btn" title="Instellingen" aria-pressed="false">Instellingen</button>
           <div class="popover hidden" id="settings-popover">
@@ -2257,7 +2264,9 @@
     try{
       fbLastAppliedPayload = raw;
       state.subjects = (parsed.subjects || []).map(normalizeSubject);
+      var localQuickNote = state.planner && state.planner.quickNote;
       state.planner = parsed.planner || state.planner;
+      if(state.planner && state.planner.quickNote === undefined && localQuickNote) state.planner.quickNote = localQuickNote;
       state.planner.weeks = (state.planner.weeks || []).map(normalizeWeek);
       state.grades = parsed.grades || state.grades;
       // Nieuw seed-materiaal (zoals een net toegevoegd hoofdstuk) hoort ook bij een oudere
@@ -5428,27 +5437,35 @@
     { key: 'note',   size: '2x2' }
   ];
   var homeEditing = false;
-  // De indeling wordt in state.planner.homeWidgets bewaard, zodat hij automatisch
-  // mee gaat met opslaan, Firebase-sync en export/import.
+  // De indeling wordt per apparaat in localStorage bewaard (telefoon en computer mogen
+  // verschillen) en dus nooit overschreven door de Firebase-sync.
+  var HOME_LAYOUT_KEY = 'studeerhub_home_layout';
+  var homeLayoutData = null;
+  try{ var rawHL = localStorage.getItem(HOME_LAYOUT_KEY); if(rawHL) homeLayoutData = JSON.parse(rawHL); }catch(e){}
+  function saveHomeLayout(){
+    try{ localStorage.setItem(HOME_LAYOUT_KEY, JSON.stringify(homeLayoutData)); }catch(e){}
+  }
   function ensureHomeLayout(){
-    var p = state.planner;
-    var cur = Array.isArray(p.homeWidgets) ? p.homeWidgets : [];
+    var cur = Array.isArray(homeLayoutData) ? homeLayoutData
+      : (state.planner && Array.isArray(state.planner.homeWidgets) ? state.planner.homeWidgets : []);
     var seen = {}, out = [];
     cur.forEach(function(w){
       if(!w || !HOME_SECTIONS.hasOwnProperty(w.key) || seen[w.key]) return;
       seen[w.key] = true;
       var def = HOME_DEFAULTS.filter(function(d){ return d.key === w.key; })[0];
-      out.push({ key: w.key, size: HOME_SIZES[w.size] ? w.size : def.size, hidden: !!w.hidden });
+      if(!HOME_SIZES[w.size]) w.size = def.size;
+      w.hidden = !!w.hidden;
+      out.push(w); // zelfde object hergebruiken, zodat knoppen in de bewerkmodus altijd de echte indeling wijzigen
     });
     HOME_DEFAULTS.forEach(function(d){
       if(!seen[d.key]) out.push({ key: d.key, size: d.size, hidden: false });
     });
-    p.homeWidgets = out;
+    homeLayoutData = out;
     return out;
   }
   function resetHomeLayout(){
-    state.planner.homeWidgets = HOME_DEFAULTS.map(function(d){ return { key: d.key, size: d.size, hidden: false }; });
-    save();
+    homeLayoutData = HOME_DEFAULTS.map(function(d){ return { key: d.key, size: d.size, hidden: false }; });
+    saveHomeLayout();
     renderHomePanel();
   }
   function buildHomePeriodBanner(){
@@ -5557,6 +5574,13 @@
     gLabel.className = 'section-label';
     gLabel.textContent = 'Cijfers';
     gHead.appendChild(gLabel);
+    var addGradeBtn = document.createElement('button');
+    addGradeBtn.type = 'button';
+    addGradeBtn.className = 'btn primary hw-add-grade';
+    addGradeBtn.textContent = '＋ Cijfer';
+    addGradeBtn.title = 'Cijfer toevoegen';
+    addGradeBtn.addEventListener('click', openAddGradeOverlay);
+    gHead.appendChild(addGradeBtn);
     gCard.appendChild(gHead);
     var gBody = document.createElement('div');
     gBody.className = 'section-body home-grades-list';
@@ -5745,7 +5769,7 @@
     rm.textContent = '×';
     rm.addEventListener('click', function(){
       w.hidden = true;
-      save();
+      saveHomeLayout();
       renderHomePanel();
     });
     top.appendChild(name);
@@ -5761,7 +5785,7 @@
       b.title = HOME_SIZES[k].label + ' (' + k.replace('x', '×') + ')';
       b.addEventListener('click', function(){
         w.size = k;
-        save();
+        saveHomeLayout();
         renderHomePanel();
       });
       sizes.appendChild(b);
@@ -5842,8 +5866,8 @@
           if(c.dataset && byKey[c.dataset.key]){ next.push(byKey[c.dataset.key]); delete byKey[c.dataset.key]; }
         });
         Object.keys(byKey).forEach(function(k){ next.push(byKey[k]); });
-        state.planner.homeWidgets = next;
-        save();
+        homeLayoutData = next;
+        saveHomeLayout();
       }
       document.addEventListener('pointermove', onMove, { passive: false });
       document.addEventListener('pointerup', onUp);
@@ -5871,13 +5895,6 @@
       resetBtn.textContent = 'Herstel standaard';
       resetBtn.addEventListener('click', resetHomeLayout);
       titleRow.appendChild(resetBtn);
-    } else {
-      var addGradeBtn = document.createElement('button');
-      addGradeBtn.type = 'button';
-      addGradeBtn.className = 'btn primary';
-      addGradeBtn.textContent = '＋ Cijfer toevoegen';
-      addGradeBtn.addEventListener('click', openAddGradeOverlay);
-      titleRow.appendChild(addGradeBtn);
     }
     contentEl.appendChild(titleRow);
 
@@ -5899,7 +5916,7 @@
           chip.type = 'button';
           chip.className = 'home-tray-chip';
           chip.textContent = '+ ' + HOME_SECTIONS[w.key];
-          chip.addEventListener('click', function(){ w.hidden = false; save(); renderHomePanel(); });
+          chip.addEventListener('click', function(){ w.hidden = false; saveHomeLayout(); renderHomePanel(); });
           tray.appendChild(chip);
         });
         bar.appendChild(tray);
@@ -6632,6 +6649,18 @@
     homeEditing = true;
     goToHome();
   });
+
+  // ---------- Klok in de bovenbalk ----------
+  (function(){
+    var el = document.getElementById('topbar-clock');
+    if(!el) return;
+    function tick(){
+      var d = new Date();
+      el.textContent = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    }
+    tick();
+    setInterval(tick, 1000);
+  })();
 
   // ---------- Thema ----------
   var themeLightOpt = document.getElementById('theme-option-light');
