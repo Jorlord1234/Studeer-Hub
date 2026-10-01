@@ -831,6 +831,30 @@
 
   .hw .section-head .hw-add-grade{ padding: 4px 11px; font-size: 12.5px; }
 
+  .fm-hint{ font-size:13px; color: var(--text-soft); margin:0 0 10px; line-height:1.5; }
+  .fm-input{
+    width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid var(--border);
+    background: var(--input-bg); color: var(--text); font-family: var(--font-body); font-size:16px;
+  }
+  .fm-input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .fm-palette{ display:flex; flex-wrap:wrap; gap:5px; margin:10px 0; }
+  .fm-key{
+    min-width:36px; padding:5px 8px; border-radius:7px; border:1.5px solid var(--border);
+    background: var(--panel-bg); color: var(--text); font-family: var(--font-body); font-size:15px; cursor:pointer;
+  }
+  .fm-key:hover{ border-color: var(--accent); }
+  .fm-preview{
+    min-height:64px; display:flex; align-items:center; justify-content:center; padding:10px;
+    border-radius:8px; background: var(--panel-bg-soft); border:1px solid var(--border); font-size:18px; overflow-x:auto;
+  }
+  .fm-preview.empty{ color: var(--text-soft); font-size:13.5px; font-style:italic; }
+  .fm-tex{ font-size:12px; color: var(--text-soft); margin:6px 0; word-break:break-all; min-height:16px; }
+  .fm-block{ display:block; font-size:13.5px; margin:6px 0 10px; }
+  .storage-bar{ height:8px; border-radius:6px; background: var(--panel-bg-soft); border:1px solid var(--border); overflow:hidden; margin-top:6px; }
+  .storage-bar > i{ display:block; height:100%; background: var(--accent); }
+  .storage-bar.warn > i{ background: var(--danger); }
+  .storage-text{ font-size:12.5px; color: var(--text-soft); }
+
   /* ---------- Cijfers ---------- */
   .grades-vak-chips{ margin: 14px 0 18px; }
   .grade-vak-chip{ cursor:pointer; background: var(--panel-bg); border: 1.5px solid var(--border); }
@@ -892,6 +916,11 @@
     padding: 10px 0; border-bottom: 1px solid var(--border);
   }
   .grade-row:last-of-type{ border-bottom:none; }
+  .grade-row.pending{ border-left: 3px solid var(--accent); padding-left: 9px; }
+  .grade-pending-tag{
+    font-size:11px; font-weight:700; color: var(--accent); background: var(--accent-soft);
+    padding: 2px 8px; border-radius: 999px; white-space:nowrap;
+  }
   .grade-type-select{
     width: 112px; padding: 7px 8px; border-radius:7px; border:1.5px solid var(--border);
     background: var(--input-bg); color: var(--text); font-family: var(--font-body); font-size:13px;
@@ -1153,6 +1182,11 @@
             </div>
             <button class="reset-link" id="text-settings-reset">Terugzetten naar standaard</button>
             <div class="popover-divider"></div>
+            <div class="field">
+              <label>Opslag (gedeelde data)</label>
+              <div class="storage-text" id="storage-text"></div>
+              <div class="storage-bar" id="storage-bar"><i></i></div>
+            </div>
             <div class="field">
               <label>Startscherm</label>
               <div class="toggle-row">
@@ -1951,8 +1985,9 @@
   function healState(){
     // Self-healing: make sure every default vak exists (matched by name), without touching
     // vakken you already have. Runs on every load, so it works no matter what was saved before.
+    var runSeeds = !state.planner.seedsApplied;   // standaardinhoud wordt maar één keer toegevoegd; wat je daarna verwijdert blijft weg
     var defaultSubjects = [SEED_SUBJECT, SEED_NEDERLANDS, SEED_ENGELS, SEED_ECONOMIE, SEED_SCHEIKUNDE, SEED_WISB, SEED_ANW, SEED_OO, SEED_LATIJN];
-    defaultSubjects.forEach(function(def){
+    if(runSeeds) defaultSubjects.forEach(function(def){
       var exists = state.subjects.some(function(s){ return s.name.toLowerCase() === def.name.toLowerCase(); });
       if(!exists){ state.subjects.push(normalizeSubject(def)); }
     });
@@ -1973,12 +2008,12 @@
 
     // Self-healing: add "Iedereen krijgt klappen" to your Nederlands boekenlijst, if it's not there yet.
     var ned = state.subjects.find(function(s){ return s.name === 'Nederlands'; });
-    if(ned && !(ned.books || []).some(function(b){ return b.title.toLowerCase() === 'iedereen krijgt klappen'; })){
+    if(runSeeds && ned && !(ned.books || []).some(function(b){ return b.title.toLowerCase() === 'iedereen krijgt klappen'; })){
       ned.books.push({ id: uid('book'), title: 'Iedereen krijgt klappen', sections: makeBookSections() });
     }
 
     // Self-healing: fill in any Nederlands book sheets from BOOK_CONTENT_LIBRARY, if still empty.
-    if(ned){
+    if(runSeeds && ned){
       (ned.books || []).forEach(function(book){
         var content = BOOK_CONTENT_LIBRARY[book.title.toLowerCase()];
         if(!content) return;
@@ -1990,13 +2025,13 @@
 
     // Self-healing: add the Hoofdstuk 1 (Chemisch rekenen) summary to Scheikunde, if not there yet.
     var schei = state.subjects.find(function(s){ return s.name === 'Scheikunde'; });
-    if(schei && !(schei.chapters || []).some(function(c){ return c.title.indexOf('Chemisch rekenen') !== -1; })){
+    if(runSeeds && schei && !(schei.chapters || []).some(function(c){ return c.title.indexOf('Chemisch rekenen') !== -1; })){
       schei.chapters.push(SCHEIKUNDE_H1);
     }
-    if(schei && !(schei.chapters || []).some(function(c){ return c.title.indexOf('Chemische bindingen') !== -1; })){
+    if(runSeeds && schei && !(schei.chapters || []).some(function(c){ return c.title.indexOf('Chemische bindingen') !== -1; })){
       schei.chapters.push(SCHEIKUNDE_H2);
     }
-    if(schei && !(schei.chapters || []).some(function(c){ return c.title.indexOf('Organische verbindingen') !== -1; })){
+    if(runSeeds && schei && !(schei.chapters || []).some(function(c){ return c.title.indexOf('Organische verbindingen') !== -1; })){
       schei.chapters.push(SCHEIKUNDE_H3);
     }
 
@@ -2004,7 +2039,7 @@
     // v3 = gecorrigeerde namen/inhoud voor o.a. hoofdstuk 6, 7 en 9.2), zonder dubbel toe te
     // voegen bij een volgende load. Een eerder toegevoegde (foutieve) v2-set wordt vervangen.
     var scheiSubj = state.subjects.find(function(s){ return s.name === 'Scheikunde'; });
-    if(scheiSubj && !(scheiSubj.chapters || []).some(function(c){ return c._v3; })){
+    if(runSeeds && scheiSubj && !(scheiSubj.chapters || []).some(function(c){ return c._v3; })){
       scheiSubj.chapters = (scheiSubj.chapters || []).filter(function(c){ return !c._v2; });
       scheiSubj.chapters = scheiSubj.chapters.concat(SCHEIKUNDE_V3_CHAPTERS.slice());
     }
@@ -2012,13 +2047,13 @@
     // Self-healing: vervang de Natuurkunde-hoofdstukken door de rijke, oorspronkelijke versie
     // met echte LaTeX-formules (v3), zodra die nog niet is toegepast.
     var natSubj = state.subjects.find(function(s){ return s.name === 'Natuurkunde'; });
-    if(natSubj && !(natSubj.chapters || []).some(function(c){ return c._v3; })){
+    if(runSeeds && natSubj && !(natSubj.chapters || []).some(function(c){ return c._v3; })){
       natSubj.chapters = NATUURKUNDE_V3_CHAPTERS.slice();
     }
 
     // Self-healing: add/upgrade de Big History-samenvatting bij ANW / Big History.
     var anwBh = state.subjects.find(function(s){ return s.name === 'ANW / Big History'; });
-    if(anwBh){
+    if(runSeeds && anwBh){
       var bhTitles = SEED_BIGHISTORY_CHAPTERS.map(function(c){ return c.title; });
       var bhChap = (anwBh.chapters || []).filter(function(c){ return c.title.indexOf('Big History') !== -1; })[0];
       var needsUpgrade = bhChap && bhChap.paragraphs && bhChap.paragraphs.length !== 1;
@@ -2088,18 +2123,135 @@
       seenTests[sig] = true;
       return true;
     });
+    state.planner.seedsApplied = true;
+    syncTestGrades();
   }
 
-  function saveLocal(){
+  function snapshotNow(){
+    return JSON.stringify({ subjects: state.subjects, planner: state.planner, grades: state.grades });
+  }
+  var lastPersistedSnap = null;
+  function saveLocal(snap){
     try{
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ subjects: state.subjects, planner: state.planner, grades: state.grades }));
+      var str = typeof snap === 'string' ? snap : snapshotNow();
+      lastPersistedSnap = str;
+      localStorage.setItem(STORAGE_KEY, str);
     }catch(e){
       console.error('Kon niet opslaan', e);
       warnStorageBlocked();
     }
   }
+  // Elke toets in de planner krijgt automatisch een lege cijferrij (datum + omschrijving al
+  // ingevuld), zodat je het cijfer later alleen nog hoeft in te vullen.
+  function syncTestGrades(){
+    if(!state.planner || !state.subjects || !state.grades) return;
+    var tests = Array.isArray(state.planner.tests) ? state.planner.tests : [];
+    // Eenmalig: toetsen uit het verleden krijgen geen lege rij (die heb je al zelf ingevuld).
+    if(!state.planner.testGradesInit){
+      var todayISO = isoDate(new Date());
+      tests.forEach(function(t){ if(t.date < todayISO) t.noGrade = true; });
+      state.planner.testGradesInit = true;
+    }
+    var byId = {};
+    tests.forEach(function(t){ byId[t.id] = t; });
+    // 1) opruimen: rijen van toetsen die niet meer bestaan
+    Object.keys(state.grades).forEach(function(sid){
+      var g = state.grades[sid];
+      if(!g || !Array.isArray(g.items)) return;
+      var seen = {};
+      g.items = g.items.filter(function(it){
+        if(!it.testId) return true;
+        if(!byId[it.testId] || byId[it.testId].noGrade){
+          if(gradeNum(it) === null) return false;   // lege rij weg
+          delete it.testId; delete it.autoNaam;      // ingevuld cijfer blijft staan
+          return true;
+        }
+        if(seen[it.testId]) return gradeNum(it) !== null && (function(){ delete it.testId; return true; })();
+        seen[it.testId] = true;
+        return true;
+      });
+    });
+    // 2) aanmaken / bijwerken
+    tests.forEach(function(t){
+      if(t.noGrade) return;
+      var label = '';
+      var ps = (state.planner.subjects || []).filter(function(x){ return x.id === t.subjectId; })[0];
+      if(ps) label = ps.label;
+      var subj = state.subjects.filter(function(sj){ return sj.name.toLowerCase() === label.toLowerCase(); })[0];
+      if(!subj) return;
+      var g = state.grades[subj.id] || (state.grades[subj.id] = { items: [] });
+      var name = (t.title || '').trim() || 'Toets';
+      var item = g.items.filter(function(it){ return it.testId === t.id; })[0];
+      if(!item){
+        g.items.push({ id: uid('grade'), naam: name, autoNaam: name, cijfer: '', weging: '1', datum: t.date, testId: t.id });
+      } else if(gradeNum(item) === null){
+        item.datum = t.date;
+        if(item.naam === item.autoNaam || !item.naam){ item.naam = name; item.autoNaam = name; }
+      }
+    });
+  }
+  // ---------- Ongedaan maken (Cmd/Ctrl+Z, opnieuw: Cmd/Ctrl+Shift+Z) ----------
+  // Snelle opeenvolgende wijzigingen (bijv. typen) tellen als één stap.
+  var undoStack = [], redoStack = [], undoLast = null, undoLastAt = 0, undoBurstOpen = false, undoMute = false;
+  var UNDO_MAX = 40, UNDO_GAP_MS = 900, UNDO_MAX_CHARS = 40000000;
+  function undoTrim(){
+    function total(){ return undoStack.reduce(function(n, x){ return n + x.length; }, 0); }
+    while(undoStack.length > UNDO_MAX || (undoStack.length > 1 && total() > UNDO_MAX_CHARS)) undoStack.shift();
+  }
+  function recordUndo(snap){
+    var now = Date.now();
+    if(undoLast === null || undoMute){ undoLast = snap; undoLastAt = now; return; }
+    if(snap === undoLast) return;
+    if(!undoBurstOpen || now - undoLastAt > UNDO_GAP_MS){
+      undoStack.push(undoLast);
+      undoTrim();
+      redoStack = [];
+      undoBurstOpen = true;
+    }
+    undoLast = snap;
+    undoLastAt = now;
+  }
+  function applySnapshot(str){
+    var parsed = JSON.parse(str);
+    state.subjects = (parsed.subjects || []).map(normalizeSubject);
+    state.planner = parsed.planner || state.planner;
+    state.planner.weeks = (state.planner.weeks || []).map(normalizeWeek);
+    state.grades = parsed.grades || {};
+    healState();
+  }
+  function doUndo(redo){
+    var from = redo ? redoStack : undoStack, to = redo ? undoStack : redoStack;
+    if(!from.length){ toast(redo ? 'Niets om opnieuw te doen' : 'Niets om ongedaan te maken'); return; }
+    var cur = snapshotNow();
+    var snap = from.pop();
+    try{ applySnapshot(snap); }
+    catch(e){ console.error('Ongedaan maken mislukt', e); from.push(snap); toast('Ongedaan maken is mislukt'); return; }
+    to.push(cur);
+    undoBurstOpen = false;
+    undoMute = true;
+    try{ save(); } finally { undoMute = false; }
+    renderAll();
+    toast(redo ? 'Opnieuw gedaan' : 'Ongedaan gemaakt (⌘Z / Ctrl+Z, terug: ⇧⌘Z / Ctrl+Y)');
+  }
+  document.addEventListener('keydown', function(e){
+    if(!(e.metaKey || e.ctrlKey) || e.altKey) return;
+    var k = (e.key || '').toLowerCase();
+    var isUndo = k === 'z' && !e.shiftKey;
+    var isRedo = (k === 'z' && e.shiftKey) || (k === 'y' && e.ctrlKey && !e.metaKey);
+    if(!isUndo && !isRedo) return;
+    var t = e.target;
+    // In een tekstveld blijft de gewone tekst-undo van de browser gelden.
+    if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    if(document.querySelector('.modal-backdrop')) return;
+    e.preventDefault();
+    doUndo(isRedo);
+  });
+
   function save(){
-    saveLocal();
+    syncTestGrades();
+    var snap = snapshotNow();
+    recordUndo(snap);
+    saveLocal(snap);
     pushToFirebase(false);
   }
   var storageWarned = false;
@@ -2143,15 +2295,89 @@
   // (nog niet-gesyncte) lokale staat. Dit was precies de bug: fbPushPending stond dan al op
   // true zodra de eerste snapshot binnenkwam, waardoor die snapshot werd genegeerd.
   var fbHasSyncedOnce = false;
+  // ---------- Samenvoegen (3-weg) ----------
+  // base = laatst bekende gedeelde versie, local = wat jij nu hebt, remote = wat er nu gedeeld staat.
+  // Wat alleen jij of alleen de ander veranderde blijft staan; veranderden jullie hetzelfde stukje
+  // allebei, dan wint jouw versie. Lijsten met id's (vakken, weken, cijfers, ...) worden per item samengevoegd.
+  function jsonEq(a, b){ return JSON.stringify(a) === JSON.stringify(b); }
+  function isPlainObj(x){ return x && typeof x === 'object' && !Array.isArray(x); }
+  function allHaveIds(arr){ return arr.every(function(x){ return isPlainObj(x) && typeof x.id === 'string'; }); }
+  function merge3(base, local, remote){
+    if(jsonEq(local, remote)) return remote;
+    if(jsonEq(local, base)) return remote;
+    if(jsonEq(remote, base)) return local;
+    if(Array.isArray(local) && Array.isArray(remote)){
+      var b = Array.isArray(base) ? base : [];
+      if(local.length + remote.length > 0 && allHaveIds(local) && allHaveIds(remote) && allHaveIds(b)){
+        var bm = {}, lm = {}, rm = {};
+        b.forEach(function(x){ bm[x.id] = x; });
+        local.forEach(function(x){ lm[x.id] = x; });
+        remote.forEach(function(x){ rm[x.id] = x; });
+        var out = [];
+        remote.forEach(function(r){
+          if(lm[r.id]) out.push(merge3(bm[r.id], lm[r.id], r));
+          else if(bm[r.id]){ if(!jsonEq(r, bm[r.id])) out.push(r); }   // wij verwijderden het; de ander veranderde het -> blijft
+          else out.push(r);                                            // nieuw bij de ander
+        });
+        local.forEach(function(l){
+          if(rm[l.id]) return;
+          if(bm[l.id]){ if(!jsonEq(l, bm[l.id])) out.push(l); }        // de ander verwijderde het; wij veranderden het -> blijft
+          else out.push(l);                                            // nieuw bij ons
+        });
+        return out;
+      }
+      return local;
+    }
+    if(isPlainObj(local) && isPlainObj(remote)){
+      var bo = isPlainObj(base) ? base : {};
+      var res = {};
+      var keys = {};
+      Object.keys(local).concat(Object.keys(remote)).forEach(function(k){ keys[k] = true; });
+      Object.keys(keys).forEach(function(k){
+        var inL = k in local, inR = k in remote, inB = k in bo;
+        if(inL && inR) res[k] = merge3(bo[k], local[k], remote[k]);
+        else if(inL){ if(!inB || !jsonEq(local[k], bo[k])) res[k] = local[k]; }
+        else if(inR){ if(!inB || !jsonEq(remote[k], bo[k])) res[k] = remote[k]; }
+      });
+      return res;
+    }
+    return local;
+  }
+
+  var FB_BASE_KEY = 'studeerhub_sync_base', FB_PENDING_KEY = 'studeerhub_push_pending';
+  var FB_PUSH_DELAY_MS = 60000;   // 1 minuut
+  var fbBase = null;
+  try{ fbBase = localStorage.getItem(FB_BASE_KEY); }catch(e){}
+  var fbRecover = false;          // er stond bij het sluiten nog een niet-verstuurde wijziging klaar
+  try{ fbRecover = !!fbBase && localStorage.getItem(FB_PENDING_KEY) === '1'; if(!fbBase) localStorage.removeItem(FB_PENDING_KEY); }catch(e){}
+  function persistSyncBase(){
+    try{ localStorage.setItem(FB_BASE_KEY, fbBase); }catch(e){ try{ localStorage.removeItem(FB_BASE_KEY); }catch(e2){} }
+  }
   function attachSnapshotListener(){
     fbDocRef.onSnapshot(function(doc){
       fbRetryAttempt = 0; // succesvolle verbinding: reset de backoff
       fbEverConnected = true;
+      if(doc.metadata && doc.metadata.hasPendingWrites) return;   // echo van onze eigen schrijfactie
+      var remoteRaw = (doc.exists && doc.data() && doc.data().payload) || null;
+      if(remoteRaw && fbBase && (fbPushPending || fbRecover)){
+        // Er staat een eigen, nog niet verstuurde wijziging klaar.
+        if(remoteRaw === fbBase){
+          // Niemand anders heeft iets veranderd: gewoon onze wijziging versturen.
+          fbHasSyncedOnce = true; fbRecover = false;
+          pushToFirebase(true);
+          return;
+        }
+        // Ook een ander apparaat/tabblad/de huiswerkhulp heeft iets veranderd: samenvoegen, niets overschrijven.
+        try{
+          var mergedObj = merge3(JSON.parse(fbBase), JSON.parse(snapshotNow()), JSON.parse(remoteRaw));
+          fbHasSyncedOnce = true; fbRecover = false; fbPushPending = false;
+          applyRemotePayload(JSON.stringify(mergedObj));
+          fbBase = remoteRaw; persistSyncBase();
+          pushToFirebase(true);
+          return;
+        }catch(e){ console.error('Samenvoegen mislukt', e); }
+      }
       if(fbPushPending && fbHasSyncedOnce){
-        // We hebben deze sessie al minstens één keer de echte gedeelde data gezien, dus onze
-        // lokale staat is daarop gebaseerd. Er staat een net gemaakte lokale wijziging klaar
-        // (mogelijk gemaakt vóórdat deze snapshot binnenkwam) — die versturen we, in plaats
-        // van hem stilletjes te verliezen.
         pushToFirebase(true);
         return;
       }
@@ -2165,7 +2391,10 @@
           // gaan, maar dat weegt niet op tegen het risico dat alle bestaande gedeelde data
           // wordt overschreven.
           fbPushPending = false;
+          fbRecover = false;
+          try{ localStorage.removeItem(FB_PENDING_KEY); }catch(e){}
           applyRemotePayload(data.payload);
+          fbBase = data.payload; persistSyncBase();
           fbHasSyncedOnce = true;
         }
       } else {
@@ -2290,34 +2519,57 @@
     }
     // Buiten de fbApplyingRemote-guard: als er hierboven iets is aangevuld/gemerged,
     // schrijft dit dat terug — lokaal én naar Firestore, voor iedereen.
-    save();
+    undoMute = true;
+    try{ save(); } finally { undoMute = false; }
   }
 
+  var fbWarnedSize = false;
+  function doFbPush(){
+    fbSaveTimer = null;
+    if(!fbReady) return;
+    var payload = snapshotNow();
+    if(!fbWarnedSize && payload.length > 880000){
+      fbWarnedSize = true;
+      toast('Let op: je data nadert de limiet van de gedeelde opslag (1 MB). Verwijder grote afbeeldingen of bijlagen.');
+    }
+    fbLastAppliedPayload = payload;
+    fbDocRef.set({ payload: payload, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(function(){
+      fbBase = payload; persistSyncBase();
+      if(snapshotNow() === payload){
+        fbPushPending = false;
+        try{ localStorage.removeItem(FB_PENDING_KEY); }catch(e){}
+      }
+    }).catch(function(err){
+      fbPushPending = false;
+      try{ localStorage.removeItem(FB_PENDING_KEY); }catch(e){}
+      console.error('Kon niet naar de gedeelde versie schrijven', err);
+      if(err && (err.code === 'invalid-argument' || /longer than|exceeds|too large/i.test(err.message || ''))){
+        toast('De gedeelde data is te groot (waarschijnlijk door een grote foto/bijlage) — die synct niet mee');
+      }
+    });
+  }
   function pushToFirebase(immediate){
     if(fbApplyingRemote) return;
-    // Er staat een lokale wijziging klaar — dit zetten we altijd, ook als we nog niet
-    // verbonden zijn. Zodra de verbinding (later) tot stand komt, pikt attachSnapshotListener
-    // dit signaal op en verstuurt hij alsnog, in plaats van de wijziging kwijt te raken.
+    // Er staat een lokale wijziging klaar. Dit onthouden we ook na sluiten van de pagina
+    // (FB_PENDING_KEY), zodat de wijziging bij het volgende openen niet door een oudere
+    // gedeelde versie wordt overschreven maar netjes wordt samengevoegd en verstuurd.
     fbPushPending = true;
+    try{ localStorage.setItem(FB_PENDING_KEY, '1'); }catch(e){}
     if(!fbReady) return;
-    clearTimeout(fbSaveTimer);
-    var doPush = function(){
-      var payload = JSON.stringify({ subjects: state.subjects, planner: state.planner, grades: state.grades });
-      fbLastAppliedPayload = payload;
-      fbDocRef.set({ payload: payload, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(function(){
-        fbPushPending = false;
-      }).catch(function(err){
-        fbPushPending = false;
-        console.error('Kon niet naar de gedeelde versie schrijven', err);
-        if(err && (err.code === 'invalid-argument' || /longer than|exceeds|too large/i.test(err.message || ''))){
-          toast('De gedeelde data is te groot (waarschijnlijk door een grote foto/bijlage) — die synct niet mee');
-        }
-      });
-    };
-    if(immediate) doPush();
-    else fbSaveTimer = setTimeout(doPush, 600000);
+    if(immediate){
+      clearTimeout(fbSaveTimer); fbSaveTimer = null;
+      doFbPush();
+    } else if(!fbSaveTimer){
+      // Niet steeds opnieuw uitstellen: uiterlijk 1 minuut na de eerste wijziging gaat alles weg.
+      fbSaveTimer = setTimeout(doFbPush, FB_PUSH_DELAY_MS);
+    }
   }
-
+  // Bij wegklikken/sluiten meteen versturen (alleen als we dit apparaat al met de gedeelde data hebben gesynct).
+  function flushPush(){
+    if(fbPushPending && fbReady && fbHasSyncedOnce && !fbApplyingRemote) pushToFirebase(true);
+  }
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden') flushPush(); });
+  window.addEventListener('pagehide', flushPush);
 
   function uid(prefix){
     return prefix + '-' + Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
@@ -2370,6 +2622,249 @@
     textarea.setSelectionRange(pos, pos);
   }
 
+  // ---------- Formules zonder LaTeX te hoeven kennen ----------
+  // Je schrijft gewoon: v = s / t, (m*v^2)/2, E_k, sqrt(x), alpha, <=, ->  ... en dit wordt omgezet.
+  var MATH_WORDS = {
+    alpha:'\\alpha', beta:'\\beta', gamma:'\\gamma', Gamma:'\\Gamma', delta:'\\delta', Delta:'\\Delta',
+    epsilon:'\\varepsilon', eta:'\\eta', theta:'\\theta', lambda:'\\lambda', mu:'\\mu', nu:'\\nu',
+    pi:'\\pi', rho:'\\rho', sigma:'\\sigma', Sigma:'\\Sigma', tau:'\\tau', phi:'\\varphi', omega:'\\omega',
+    Omega:'\\Omega', infty:'\\infty', oneindig:'\\infty', sin:'\\sin', cos:'\\cos', tan:'\\tan',
+    log:'\\log', ln:'\\ln', graden:'^{\\circ}', deg:'^{\\circ}'
+  };
+  var MATH_FUNCS = { sqrt:'\\sqrt', wortel:'\\sqrt', vec:'\\vec', bar:'\\overline', hat:'\\hat' };
+  var MATH_OPS = [
+    ['<->','\\leftrightarrow'], ['->','\\rightarrow'], ['<-','\\leftarrow'], ['=>','\\Rightarrow'],
+    ['<=','\\leq'], ['>=','\\geq'], ['!=','\\neq'], ['~=','\\approx'], ['+-','\\pm'],
+    ['*','\\cdot'], ['~','\\approx'], ['%','\\%'], ['&','\\&'], ['#','\\#'], ['{','\\{'], ['}','\\}'],
+    ['\u00B0','^{\\circ}'], ['\u00D7','\\times'], ['\u00B7','\\cdot'], ['\u2264','\\leq'], ['\u2265','\\geq'],
+    ['\u2260','\\neq'], ['\u2248','\\approx'], ['\u2192','\\rightarrow'], ['\u00B1','\\pm']
+  ];
+  function mathToTex(src){
+    src = String(src || '');
+    if(src.indexOf('\\') !== -1) return src.trim();       // je schreef zelf al LaTeX
+    var i = 0, n = src.length;
+    function ws(){ while(i < n && /\s/.test(src.charAt(i))) i++; }
+    function seq(stop){
+      var out = '', frac = false;
+      while(true){
+        ws();
+        if(i >= n || (stop && src.charAt(i) === stop)) break;
+        var t = term();
+        out += t.tex; if(t.frac) frac = true;
+      }
+      return { tex: out.replace(/\s+/g, ' ').trim(), frac: frac };
+    }
+    function num(x){ return x.inner !== null && x.plain ? x.inner : x.tex; }
+    function term(){
+      for(var k = 0; k < MATH_OPS.length; k++){
+        var op = MATH_OPS[k][0];
+        if(src.substr(i, op.length) === op){ i += op.length; return { tex: ' ' + MATH_OPS[k][1] + ' ' }; }
+      }
+      if(src.charAt(i) === ')'){ i++; return { tex: ')' }; }
+      var left = scripted(), frac = false;
+      while(true){
+        var save = i; ws();
+        if(src.charAt(i) !== '/'){ i = save; break; }
+        i++; ws();
+        var right = (i < n) ? scripted() : { tex: '', inner: null, plain: true };
+        left = { tex: '\\frac{' + num(left) + '}{' + num(right) + '}', inner: null, plain: true };
+        frac = true;
+      }
+      return { tex: left.tex, frac: frac || !!left.frac };
+    }
+    function scriptArg(){
+      ws();
+      var sign = '';
+      if(src.charAt(i) === '-' || src.charAt(i) === '+'){ sign = src.charAt(i); i++; ws(); }
+      if(src.charAt(i) === '('){
+        i++; var inner = seq(')'); if(src.charAt(i) === ')') i++;
+        return sign + inner.tex;
+      }
+      var m = /^(\d+([.,]\d+)?|[A-Za-z\u0370-\u03FF]+)/.exec(src.slice(i));
+      if(!m) return sign;
+      i += m[0].length;
+      var w = m[0];
+      if(MATH_WORDS.hasOwnProperty(w) && !/^\d/.test(w)) w = MATH_WORDS[w] + ' ';
+      return sign + w.replace(',', '{,}');
+    }
+    function scripted(){
+      var a = atom(), tex = a.tex, plain = true;
+      while(src.charAt(i) === '^' || src.charAt(i) === '_'){
+        var c = src.charAt(i); i++;
+        tex += c + '{' + scriptArg() + '}'; plain = false;
+      }
+      return { tex: tex, inner: a.inner, plain: plain, frac: a.frac };
+    }
+    function atom(){
+      var c = src.charAt(i), m;
+      if(c === '"'){
+        var e = src.indexOf('"', i + 1); if(e === -1) e = n;
+        var txt = src.slice(i + 1, e); i = Math.min(n, e + 1);
+        return { tex: '\\text{' + txt.replace(/[{}\\]/g, '') + '}', inner: null };
+      }
+      if(c === '('){
+        i++; var inner = seq(')'); if(src.charAt(i) === ')') i++;
+        return { tex: inner.frac ? '\\left(' + inner.tex + '\\right)' : '(' + inner.tex + ')', inner: inner.tex, frac: inner.frac };
+      }
+      m = /^\d+([.,]\d+)?/.exec(src.slice(i));
+      if(m){ i += m[0].length; return { tex: m[0].replace(',', '{,}'), inner: null }; }
+      m = /^[A-Za-z\u00C0-\u024F\u0370-\u03FF]+/.exec(src.slice(i));
+      if(m){
+        var w = m[0]; i += w.length;
+        if(MATH_FUNCS.hasOwnProperty(w) && src.charAt(i) === '('){
+          i++; var arg = seq(')'); if(src.charAt(i) === ')') i++;
+          return { tex: MATH_FUNCS[w] + '{' + arg.tex + '}', inner: null, frac: arg.frac };
+        }
+        if(w === 'abs' && src.charAt(i) === '('){
+          i++; var a2 = seq(')'); if(src.charAt(i) === ')') i++;
+          return { tex: '\\left|' + a2.tex + '\\right|', inner: null };
+        }
+        if(MATH_WORDS.hasOwnProperty(w)) return { tex: MATH_WORDS[w] + ' ', inner: null };
+        return { tex: w, inner: null };
+      }
+      i++;
+      if('=+-<>'.indexOf(c) !== -1) return { tex: ' ' + c + ' ', inner: null };
+      return { tex: c, inner: null };
+    }
+    return seq(null).tex;
+  }
+
+  function insertInline(textarea, text){
+    var st = textarea.selectionStart, en = textarea.selectionEnd;
+    textarea.value = textarea.value.slice(0, st) + text + textarea.value.slice(en);
+    textarea.dispatchEvent(new Event('input'));
+    var pos = st + text.length;
+    textarea.focus();
+    textarea.setSelectionRange(pos, pos);
+  }
+
+  function openFormulaDialog(textarea){
+    var body = document.createElement('div');
+    var hint = document.createElement('p');
+    hint.className = 'fm-hint';
+    hint.textContent = 'Schrijf je formule gewoon uit. Voorbeelden: v = s / t   ·   Ek = (m*v^2)/2   ·   F_z = m*g   ·   sqrt(a^2 + b^2)   ·   10^-3   ·   alpha, Delta, pi';
+    body.appendChild(hint);
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'fm-input';
+    input.placeholder = 'bijv. v = s / t';
+    input.autocomplete = 'off';
+    body.appendChild(input);
+
+    var pal = document.createElement('div');
+    pal.className = 'fm-palette';
+    [
+      ['a/b', '( )/( )', 'breuk'], ['x\u00B2', '^2', 'kwadraat'], ['x\u207F', '^( )', 'macht'], ['x\u2081', '_( )', 'index'],
+      ['\u221A', 'sqrt( )', 'wortel'], ['\u00B7', ' * ', 'maal'], ['\u00B1', ' +- ', 'plusmin'], ['\u2264', ' <= ', 'kleiner of gelijk'],
+      ['\u2265', ' >= ', 'groter of gelijk'], ['\u2260', ' != ', 'ongelijk'], ['\u2248', ' ~= ', 'ongeveer'], ['\u2192', ' -> ', 'pijl'],
+      ['\u0394', 'Delta', 'Delta'], ['\u03B1', 'alpha', 'alpha'], ['\u03B2', 'beta', 'beta'], ['\u03BB', 'lambda', 'lambda'],
+      ['\u03BC', 'mu', 'mu'], ['\u03C1', 'rho', 'rho'], ['\u03C0', 'pi', 'pi'], ['\u03C9', 'omega', 'omega'], ['\u03A9', 'Omega', 'Omega'], ['\u00B0', '\u00B0', 'graden']
+    ].forEach(function(p){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'fm-key'; b.textContent = p[0]; b.title = p[2];
+      b.addEventListener('click', function(){
+        var st = input.selectionStart, en = input.selectionEnd;
+        var ins = p[1], selText = input.value.slice(st, en);
+        var cursorInside = ins.indexOf('( )');
+        if(cursorInside !== -1){
+          // Breuk/macht/index/wortel: omsluit een eventuele selectie met de haakjes en zet de cursor erin.
+          var filled = ins.replace('( )', '(' + selText + ')');
+          input.value = input.value.slice(0, st) + filled + input.value.slice(en);
+          var pos = st + ins.indexOf('( )') + 1 + selText.length;
+          input.focus(); input.setSelectionRange(pos, pos);
+        } else {
+          input.value = input.value.slice(0, st) + ins + input.value.slice(en);
+          var p2 = st + ins.length; input.focus(); input.setSelectionRange(p2, p2);
+        }
+        update();
+      });
+      pal.appendChild(b);
+    });
+    body.appendChild(pal);
+
+    var preview = document.createElement('div');
+    preview.className = 'fm-preview';
+    body.appendChild(preview);
+    var texLine = document.createElement('div');
+    texLine.className = 'fm-tex';
+    body.appendChild(texLine);
+
+    var blockRow = document.createElement('label');
+    blockRow.className = 'fm-block';
+    var blockCb = document.createElement('input');
+    blockCb.type = 'checkbox';
+    blockRow.appendChild(blockCb);
+    blockRow.appendChild(document.createTextNode(' Groot en op een eigen regel'));
+    body.appendChild(blockRow);
+
+    function update(){
+      var tex = mathToTex(input.value);
+      texLine.textContent = tex ? 'Opgeslagen als: $' + tex + '$' : '';
+      preview.textContent = '';
+      if(!tex){ preview.textContent = 'Voorbeeld verschijnt hier'; preview.classList.add('empty'); return; }
+      preview.classList.remove('empty');
+      if(window.katex){
+        try{ window.katex.render(tex, preview, { throwOnError: false, displayMode: true }); return; }catch(e){}
+      }
+      preview.textContent = tex;
+    }
+    input.addEventListener('input', update);
+
+    var actions = document.createElement('div');
+    actions.className = 'modal-actions';
+    var overlay;
+    var cancel = document.createElement('button');
+    cancel.type = 'button'; cancel.className = 'btn'; cancel.textContent = 'Annuleren';
+    cancel.addEventListener('click', function(){ overlay.close(); });
+    var ok = document.createElement('button');
+    ok.type = 'button'; ok.className = 'btn primary'; ok.textContent = 'Invoegen';
+    function insert(){
+      var tex = mathToTex(input.value);
+      if(!tex){ input.focus(); return; }
+      overlay.close();
+      if(blockCb.checked) insertAtCursor(textarea, '$$' + tex + '$$');
+      else insertInline(textarea, '$' + tex + '$');
+    }
+    ok.addEventListener('click', insert);
+    input.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); insert(); } });
+    actions.appendChild(cancel);
+    actions.appendChild(ok);
+    body.appendChild(actions);
+    update();
+    overlay = openOverlay({ title: 'Formule invoegen', bodyEl: body, width: '520px' });
+    setTimeout(function(){ input.focus(); }, 30);
+  }
+
+  // Foto's worden verkleind (max 1600 px, JPEG) zodat ze je gedeelde opslag niet vullen.
+  function compressImageFile(file, done){
+    function plain(){
+      var r = new FileReader();
+      r.onload = function(){ done(r.result); };
+      r.readAsDataURL(file);
+    }
+    if(!/^image\/(png|jpe?g|webp|bmp)$/i.test(file.type)){ plain(); return; }
+    var img = new Image();
+    var objUrl = URL.createObjectURL(file);
+    img.onload = function(){
+      try{
+        var max = 1600, w = img.naturalWidth, h = img.naturalHeight;
+        var k = Math.min(1, max / Math.max(w, h));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        var url = c.toDataURL('image/jpeg', 0.82);
+        URL.revokeObjectURL(objUrl);
+        var r = new FileReader();
+        r.onload = function(){ done(url.length < String(r.result).length ? url : r.result); };
+        r.readAsDataURL(file);
+      }catch(e){ URL.revokeObjectURL(objUrl); plain(); }
+    };
+    img.onerror = function(){ URL.revokeObjectURL(objUrl); plain(); };
+    img.src = objUrl;
+  }
+
   var MAX_MEDIA_BYTES = 2 * 1024 * 1024; // 2MB waarschuwingsgrens (base64 in localStorage)
 
   function attachMediaButtons(textarea){
@@ -2390,12 +2885,9 @@
       if(file.size > MAX_MEDIA_BYTES){
         toast('Let op: deze afbeelding is groot (' + Math.round(file.size/1024/1024*10)/10 + 'MB) — kan opslag vol laten lopen');
       }
-      var reader = new FileReader();
-      reader.onload = function(){
-        var line = '![' + file.name.replace(/[\[\]]/g,'') + '](' + reader.result + ')';
-        insertAtCursor(textarea, line);
-      };
-      reader.readAsDataURL(file);
+      compressImageFile(file, function(url){
+        insertAtCursor(textarea, '![' + file.name.replace(/[\[\]]/g,'') + '](' + url + ')');
+      });
       imgInput.value = '';
     });
 
@@ -2435,7 +2927,15 @@
       insertAtCursor(textarea, skeleton);
     });
 
+    var mathBtn = document.createElement('button');
+    mathBtn.type = 'button';
+    mathBtn.className = 'icon-btn';
+    mathBtn.title = 'Formule invoegen (zonder LaTeX)';
+    mathBtn.innerHTML = '<span>\u2211 Formule</span>';
+    mathBtn.addEventListener('click', function(){ openFormulaDialog(textarea); });
+
     toolbar.appendChild(imgBtn);
+    toolbar.appendChild(mathBtn);
     toolbar.appendChild(fileBtn);
     toolbar.appendChild(tableBtn);
     toolbar.appendChild(dropdownBtn);
@@ -2445,7 +2945,7 @@
   }
 
   function escapeHtml(s){
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
   var MATH_PLACEHOLDER_RE = /\uE000(\d+)\uE001/g;
   function extractMath(text){
@@ -2527,8 +3027,8 @@
     });
     return out;
   }
-  var IMAGE_LINE_RE = /^!\[([^\]]*)\]\((data:image\/[a-zA-Z0-9.+-]+;base64,[^)]+)\)$/;
-  var ATTACHMENT_LINE_RE = /^\[bijlage: ([^\]]+)\]\((data:[^)]+)\)$/;
+  var IMAGE_LINE_RE = /^!\[([^\]]*)\]\((data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+\/=]+)\)$/;
+  var ATTACHMENT_LINE_RE = /^\[bijlage: ([^\]]+)\]\((data:[^)"'<>\s]+)\)$/;
   var DROPDOWN_LINE_RE = /^\[dropdown:\s*([^|]*)\|\s*(.+)\]$/;
 
   // ---------- Tabellen (Google Docs-achtige markdown-tabel-syntax) ----------
@@ -6170,7 +6670,7 @@
     }
     g.items.forEach(function(item){
       var row = document.createElement('div');
-      row.className = 'grade-row';
+      row.className = 'grade-row' + (item.testId && gradeNum(item) === null ? ' pending' : '');
 
       var nameIn = document.createElement('input');
       nameIn.type = 'text';
@@ -6191,7 +6691,7 @@
       var cIn = document.createElement('input');
       cIn.type = 'number'; cIn.step = '0.1'; cIn.min = '1'; cIn.max = '10';
       cIn.value = item.cijfer; cIn.className = 'grade-input';
-      cIn.placeholder = 'Cijfer';
+      cIn.placeholder = (item.testId && gradeNum(item) === null) ? 'Invullen' : 'Cijfer';
       function markLow(){ var v = parseFloat(cIn.value); cIn.classList.toggle('low', !isNaN(v) && v < 5.5); }
       markLow();
       cIn.addEventListener('input', function(){ item.cijfer = cIn.value; markLow(); save(); updateGradeSummary(); });
@@ -6206,6 +6706,10 @@
 
       var delBtn = iconBtn('trash', null, 'icon-btn danger');
       delBtn.addEventListener('click', function(){
+        if(item.testId){
+          var linkedTest = ensureTests().filter(function(t){ return t.id === item.testId; })[0];
+          if(linkedTest) linkedTest.noGrade = true;   // niet opnieuw aanmaken
+        }
         g.items = g.items.filter(function(i){ return i.id !== item.id; });
         save(); renderGradesPanel();
       });
@@ -6650,6 +7154,17 @@
     goToHome();
   });
 
+  function updateStorageMeter(){
+    var t = document.getElementById('storage-text'), bar = document.getElementById('storage-bar');
+    if(!t || !bar) return;
+    var bytes = new TextEncoder().encode(snapshotNow()).length;
+    var pct = Math.min(100, Math.round(bytes / 1048576 * 100));
+    t.textContent = Math.round(bytes / 1024) + ' KB van 1024 KB gebruikt (' + pct + '%)' + (pct >= 85 ? ' — bijna vol: verwijder grote afbeeldingen of bijlagen' : '');
+    bar.firstElementChild.style.width = pct + '%';
+    bar.classList.toggle('warn', pct >= 85);
+  }
+  settingsBtn.addEventListener('click', updateStorageMeter);
+
   // ---------- Klok in de bovenbalk ----------
   (function(){
     var el = document.getElementById('topbar-clock');
@@ -6761,6 +7276,13 @@
 
   // ---------- Init ----------
   load();
+  undoLast = snapshotNow();
+  lastPersistedSnap = undoLast;
+  // Vangnet: een wijziging waarbij ergens vergeten is save() aan te roepen wordt hier alsnog bewaard.
+  setInterval(function(){
+    if(fbApplyingRemote || lastPersistedSnap === null) return;
+    if(snapshotNow() !== lastPersistedSnap) save();
+  }, 3000);
   renderAll();
   initFirebaseSync();
 
